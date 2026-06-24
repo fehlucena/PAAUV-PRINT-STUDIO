@@ -10,9 +10,6 @@ export default function App() {
   const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = () => {
-    if (window.self !== window.top) {
-      alert("Aviso: A impressão direta pode ser bloqueada nesta visualização.\nPara garantir a impressão correta, abra o app em uma NOVA GUIA clicando no botão (ícone de seta) no canto superior direito e tente novamente.");
-    }
     setTimeout(() => {
       window.print();
     }, 100);
@@ -20,6 +17,14 @@ export default function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-100 overflow-hidden text-slate-800 font-sans print:h-auto print:bg-white print:overflow-visible">
+      <style type="text/css" media="print">
+        {`
+          @page {
+            size: ${config.width}mm ${config.height}mm;
+            margin: 0;
+          }
+        `}
+      </style>
       <div className="print:hidden">
         <TopBar 
           zoom={zoom} 
