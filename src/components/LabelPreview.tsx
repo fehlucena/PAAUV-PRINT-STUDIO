@@ -297,7 +297,7 @@ const SingleTag: React.FC<{
           <div className="flex flex-col items-center justify-end shrink-0 w-full pt-[1mm]">
             {config.codeType !== "QR" ? (
               <div className="flex flex-col items-center w-full">
-                <div className="w-full flex items-center justify-center overflow-hidden h-[12mm] scale-y-[1.2] origin-bottom mb-1">
+                <div className="w-full flex items-center justify-center overflow-hidden h-[12mm] mb-1">
                   <SafeBarcode
                     value={config.codeValue}
                     format={config.codeType}
