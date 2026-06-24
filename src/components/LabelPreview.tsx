@@ -1,7 +1,7 @@
-import React, { forwardRef } from 'react';
-import Barcode from 'react-barcode';
-import QRCode from 'react-qr-code';
-import { LabelConfig } from '../types';
+import React, { forwardRef } from "react";
+import Barcode from "react-barcode";
+import QRCode from "react-qr-code";
+import { LabelConfig } from "../types";
 
 interface LabelPreviewProps {
   config: LabelConfig;
@@ -12,22 +12,30 @@ const SafeBarcode = ({ value, format }: { value: string; format: string }) => {
   // If invalid, we show a fallback. react-barcode handles errors internally but sometimes throws.
   try {
     let validValue = value;
-    if (format === 'EAN13' && value.length !== 12 && value.length !== 13) {
-      return <div className="text-[10px] text-red-500 font-bold bg-red-50 p-1 border border-red-200">EAN-13 inválido (12-13 dígitos)</div>;
+    if (format === "EAN13" && value.length !== 12 && value.length !== 13) {
+      return (
+        <div className="text-[10px] text-red-500 font-bold bg-red-50 p-1 border border-red-200">
+          EAN-13 inválido (12-13 dígitos)
+        </div>
+      );
     }
-    if (format === 'UPC' && value.length !== 11 && value.length !== 12) {
-      return <div className="text-[10px] text-red-500 font-bold bg-red-50 p-1 border border-red-200">UPC-A inválido (11-12 dígitos)</div>;
+    if (format === "UPC" && value.length !== 11 && value.length !== 12) {
+      return (
+        <div className="text-[10px] text-red-500 font-bold bg-red-50 p-1 border border-red-200">
+          UPC-A inválido (11-12 dígitos)
+        </div>
+      );
     }
 
     return (
-      <Barcode 
-        value={validValue || '000'} 
+      <Barcode
+        value={validValue || "000"}
         format={format as any}
-        width={1.5} 
-        height={25} 
-        displayValue={false} 
-        margin={0} 
-        background="transparent" 
+        width={1.5}
+        height={25}
+        displayValue={false}
+        margin={0}
+        background="transparent"
         lineColor="#000000"
       />
     );
@@ -36,18 +44,22 @@ const SafeBarcode = ({ value, format }: { value: string; format: string }) => {
   }
 };
 
-const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: number }> = ({ config, isLast, colWidth }) => {
-  if (config.labelType === 'logistics') {
+const SingleTag: React.FC<{
+  config: LabelConfig;
+  isLast: boolean;
+  colWidth: number;
+}> = ({ config, isLast, colWidth }) => {
+  if (config.labelType === "logistics") {
     return (
-      <div 
-        className={`flex flex-col overflow-hidden text-black bg-white ${!isLast ? 'border-r border-dashed border-slate-300' : ''}`}
-        style={{ 
-          width: `${colWidth}mm`, 
+      <div
+        className={`flex flex-col overflow-hidden text-black bg-white ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
+        style={{
+          width: `${colWidth}mm`,
           height: `${config.height}mm`,
-          fontFamily: config.fontFamily 
+          fontFamily: config.fontFamily,
         }}
       >
-        <div 
+        <div
           className="flex flex-col h-full w-full"
           style={{
             paddingTop: `${config.paddingTop ?? 4}mm`,
@@ -59,63 +71,109 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
           {/* Top section: Remetente & Logo */}
           <div className="flex justify-between items-start border-b-[1.5px] border-black pb-[2mm] mb-[2mm]">
             <div className="flex flex-col w-[65%] pr-1">
-              <span className="text-[8px] font-extrabold uppercase mb-[1mm]">Remetente</span>
-              <span className="text-[10px] leading-tight whitespace-pre-wrap">{config.remetente}</span>
+              <span className="text-[8px] font-extrabold uppercase mb-[1mm]">
+                Remetente
+              </span>
+              <span className="text-[10px] leading-tight whitespace-pre-wrap">
+                {config.remetente}
+              </span>
             </div>
             {config.showLogo && config.logoBase64 && (
-              <img src={config.logoBase64} alt="Logo" className="max-w-[30%] object-contain shrink-0" style={{ maxHeight: `${config.logoSize}mm` }} />
+              <img
+                src={config.logoBase64}
+                alt="Logo"
+                className="max-w-[30%] object-contain shrink-0"
+                style={{ maxHeight: `${config.logoSize}mm` }}
+              />
             )}
           </div>
 
           {/* Destinatário */}
           <div className="flex flex-col mb-[2mm] flex-grow">
-            <span className="text-[9px] font-extrabold uppercase mb-[1mm] bg-black text-white px-1.5 py-0.5 self-start rounded-sm tracking-widest">Destinatário</span>
-            <span className="text-[13px] font-bold leading-snug whitespace-pre-wrap mt-[1mm]">{config.destinatario}</span>
+            <span className="text-[9px] font-extrabold uppercase mb-[1mm] bg-black text-white px-1.5 py-0.5 self-start rounded-sm tracking-widest">
+              Destinatário
+            </span>
+            <span className="text-[13px] font-bold leading-snug whitespace-pre-wrap mt-[1mm]">
+              {config.destinatario}
+            </span>
           </div>
 
           {/* Info Row: Pedido, Transportadora, Peso, Volumes */}
           <div className="grid grid-cols-2 gap-[2mm] mb-[2mm] border-t-[1.5px] border-b-[1.5px] border-black py-[2mm] shrink-0">
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">Transportadora</span>
-              <span className="text-[10px] font-extrabold">{config.transportadora}</span>
+              <span className="text-[8px] uppercase font-semibold text-slate-600">
+                Transportadora
+              </span>
+              <span className="text-[10px] font-extrabold">
+                {config.transportadora}
+              </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">Pedido / NFe</span>
-              <span className="text-[10px] font-extrabold">{config.pedido}</span>
+              <span className="text-[8px] uppercase font-semibold text-slate-600">
+                Pedido / NFe
+              </span>
+              <span className="text-[10px] font-extrabold">
+                {config.pedido}
+              </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">Peso</span>
+              <span className="text-[8px] uppercase font-semibold text-slate-600">
+                Peso
+              </span>
               <span className="text-[10px] font-extrabold">{config.peso}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">Volumes</span>
-              <span className="text-[10px] font-extrabold">{config.volumes}</span>
+              <span className="text-[8px] uppercase font-semibold text-slate-600">
+                Volumes
+              </span>
+              <span className="text-[10px] font-extrabold">
+                {config.volumes}
+              </span>
             </div>
           </div>
 
           {/* Barcode */}
-          {config.codeType !== 'NENHUM' && (
+          {config.codeType !== "NENHUM" && (
             <div className="flex flex-col items-center justify-center mt-auto min-h-[22mm] shrink-0 w-full pt-[1mm]">
-              {config.codeType !== 'QR' ? (
+              {config.codeType !== "QR" ? (
                 <div className="flex flex-col items-center w-full">
                   <div className="w-full flex items-center justify-center overflow-hidden">
-                    <SafeBarcode value={config.codeValue} format={config.codeType} />
+                    <SafeBarcode
+                      value={config.codeValue}
+                      format={config.codeType}
+                    />
                   </div>
-                  <div className="text-[10px] font-mono font-bold tracking-[2px] mt-[1mm] text-center w-full truncate">
-                    {config.codeValue}
+                  <div
+                    className="font-mono font-bold tracking-[2px] text-center w-full truncate"
+                    style={{
+                      marginTop: `${config.barcodeTextSpacing}mm`,
+                      fontSize: `${config.barcodeTextSize}px`,
+                    }}
+                  >
+                    {config.barcodeTextValue || config.codeValue}
                   </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center w-full">
                   <div className="h-[20mm]">
-                    <QRCode 
-                      value={config.codeValue || '000'} 
-                      size={256} 
-                      style={{ height: "100%", maxWidth: "100%", width: "100%" }} 
+                    <QRCode
+                      value={config.codeValue || "000"}
+                      size={256}
+                      style={{
+                        height: "100%",
+                        maxWidth: "100%",
+                        width: "100%",
+                      }}
                     />
                   </div>
-                  <div className="text-[9px] font-mono font-bold tracking-[1px] mt-[1mm] text-center w-full truncate">
-                    {config.codeValue}
+                  <div
+                    className="font-mono font-bold tracking-[1px] text-center w-full truncate"
+                    style={{
+                      marginTop: `${config.barcodeTextSpacing}mm`,
+                      fontSize: `${config.barcodeTextSize}px`,
+                    }}
+                  >
+                    {config.barcodeTextValue || config.codeValue}
                   </div>
                 </div>
               )}
@@ -127,16 +185,22 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
   }
 
   const renderHeaderLayout = () => {
-    const logoEl = config.showLogo && config.logoBase64 ? (
-      <img src={config.logoBase64} alt="Logo" className="max-w-full object-contain shrink-0" style={{ maxHeight: `${config.logoSize}mm` }} />
-    ) : null;
+    const logoEl =
+      config.showLogo && config.logoBase64 ? (
+        <img
+          src={config.logoBase64}
+          alt="Logo"
+          className="max-w-full object-contain shrink-0"
+          style={{ maxHeight: `${config.logoSize}mm` }}
+        />
+      ) : null;
 
     const marcaEl = config.showMarca ? (
-      <div 
-        className={`uppercase leading-[1.1] tracking-tight ${config.marcaBold ? 'font-black' : 'font-medium'} ${config.marcaItalic ? 'italic' : ''}`}
-        style={{ 
+      <div
+        className={`uppercase leading-[1.1] tracking-tight ${config.marcaBold ? "font-black" : "font-medium"} ${config.marcaItalic ? "italic" : ""}`}
+        style={{
           fontSize: `${config.sizeMarca}px`,
-          textAlign: config.marcaAlign 
+          textAlign: config.marcaAlign,
         }}
       >
         {config.marca}
@@ -146,14 +210,22 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
     if (!logoEl && !marcaEl) return null;
 
     let layoutClass = "flex items-center";
-    
-    if (config.headerLayout === 'logo-left') layoutClass = "flex flex-row items-center";
-    else if (config.headerLayout === 'logo-right') layoutClass = "flex flex-row-reverse items-center";
-    else if (config.headerLayout === 'logo-top') layoutClass = "flex flex-col items-center";
-    else if (config.headerLayout === 'logo-bottom') layoutClass = "flex flex-col-reverse items-center";
-    else if (config.headerLayout === 'space-between') layoutClass = "flex flex-row items-center justify-between w-full";
 
-    const gapStyle = config.headerLayout === 'space-between' ? {} : { gap: `${config.headerGap}mm` };
+    if (config.headerLayout === "logo-left")
+      layoutClass = "flex flex-row items-center";
+    else if (config.headerLayout === "logo-right")
+      layoutClass = "flex flex-row-reverse items-center";
+    else if (config.headerLayout === "logo-top")
+      layoutClass = "flex flex-col items-center";
+    else if (config.headerLayout === "logo-bottom")
+      layoutClass = "flex flex-col-reverse items-center";
+    else if (config.headerLayout === "space-between")
+      layoutClass = "flex flex-row items-center justify-between w-full";
+
+    const gapStyle =
+      config.headerLayout === "space-between"
+        ? {}
+        : { gap: `${config.headerGap}mm` };
 
     return (
       <div className={`${layoutClass} max-w-[80%]`} style={gapStyle}>
@@ -164,18 +236,20 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
   };
 
   return (
-    <div 
-      className={`flex flex-col overflow-hidden text-black bg-white ${!isLast ? 'border-r border-dashed border-slate-300' : ''}`}
-      style={{ 
-        width: `${colWidth}mm`, 
+    <div
+      className={`flex flex-col overflow-hidden text-black bg-white ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
+      style={{
+        width: `${colWidth}mm`,
         height: `${config.height}mm`,
-        fontFamily: config.fontFamily 
+        fontFamily: config.fontFamily,
       }}
     >
-      <div 
+      <div
         className="flex flex-col"
-        style={{ 
-          height: config.showPrice ? `calc(${config.height}mm - ${config.serrilha}mm)` : `${config.height}mm`,
+        style={{
+          height: config.showPrice
+            ? `calc(${config.height}mm - ${config.serrilha}mm)`
+            : `${config.height}mm`,
           paddingTop: `${config.paddingTop ?? 4}mm`,
           paddingBottom: `${config.paddingBottom ?? 2}mm`,
           paddingLeft: `${config.paddingHorizontal ?? 3}mm`,
@@ -184,15 +258,17 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
       >
         <div className="flex justify-between items-start mb-[1mm] relative shrink-0">
           {renderHeaderLayout()}
-          
+
           {config.showCat && (
-            <div className={`bg-black text-white px-1.5 py-0.5 text-[9px] font-bold rounded-[3px] uppercase mt-[1mm] shrink-0 max-w-[25%] overflow-hidden text-ellipsis whitespace-nowrap text-center ${config.headerLayout === 'space-between' ? 'absolute right-0' : ''}`}>
+            <div
+              className={`bg-black text-white px-1.5 py-0.5 text-[9px] font-bold rounded-[3px] uppercase mt-[1mm] shrink-0 max-w-[25%] overflow-hidden text-ellipsis whitespace-nowrap text-center ${config.headerLayout === "space-between" ? "absolute right-0" : ""}`}
+            >
               {config.cat}
             </div>
           )}
         </div>
 
-        <div 
+        <div
           className="font-extrabold leading-[1.1] mb-[1mm]"
           style={{ fontSize: `${config.sizeProduto}px` }}
         >
@@ -200,38 +276,60 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
         </div>
 
         <div className="flex flex-col gap-0.5 flex-grow shrink overflow-hidden">
-          {config.details.filter(d => d.show).map(d => (
-            <div key={d.id} className="flex justify-between text-[11px] border-b border-dotted border-[#ccc] pb-px">
-              <span className="text-[#555] font-semibold truncate pr-1">{d.label}</span>
-              <span className="font-bold max-w-[70%] text-right truncate">
-                {d.value}
-              </span>
-            </div>
-          ))}
+          {config.details
+            .filter((d) => d.show)
+            .map((d) => (
+              <div
+                key={d.id}
+                className="flex justify-between text-[11px] border-b border-dotted border-[#ccc] pb-px"
+              >
+                <span className="text-[#555] font-semibold truncate pr-1">
+                  {d.label}
+                </span>
+                <span className="font-bold max-w-[70%] text-right truncate">
+                  {d.value}
+                </span>
+              </div>
+            ))}
         </div>
 
-        {config.codeType !== 'NENHUM' && (
+        {config.codeType !== "NENHUM" && (
           <div className="flex flex-col items-center justify-end shrink-0 w-full pt-[1mm]">
-            {config.codeType !== 'QR' ? (
+            {config.codeType !== "QR" ? (
               <div className="flex flex-col items-center w-full">
                 <div className="w-full flex items-center justify-center overflow-hidden h-[12mm] scale-y-[1.2] origin-bottom mb-1">
-                  <SafeBarcode value={config.codeValue} format={config.codeType} />
+                  <SafeBarcode
+                    value={config.codeValue}
+                    format={config.codeType}
+                  />
                 </div>
-                <div className="text-[10px] font-mono font-bold tracking-[1px] text-center w-full truncate leading-none">
-                  {config.codeValue}
+                <div
+                  className="font-mono font-bold tracking-[1px] text-center w-full truncate leading-none"
+                  style={{
+                    marginTop: `${config.barcodeTextSpacing}mm`,
+                    fontSize: `${config.barcodeTextSize}px`,
+                  }}
+                >
+                  {config.barcodeTextValue || config.codeValue}
                 </div>
               </div>
             ) : (
               <div className="flex flex-col items-center w-full">
                 <div className="h-[12mm] w-[12mm]">
-                  <QRCode 
-                    value={config.codeValue || '000'} 
-                    size={256} 
-                    style={{ height: "100%", maxWidth: "100%", width: "100%" }} 
+                  <QRCode
+                    value={config.codeValue || "000"}
+                    size={256}
+                    style={{ height: "100%", maxWidth: "100%", width: "100%" }}
                   />
                 </div>
-                <div className="text-[9px] font-mono font-bold tracking-[1px] mt-[1mm] text-center w-full truncate">
-                  {config.codeValue}
+                <div
+                  className="font-mono font-bold tracking-[1px] text-center w-full truncate"
+                  style={{
+                    marginTop: `${config.barcodeTextSpacing}mm`,
+                    fontSize: `${config.barcodeTextSize}px`,
+                  }}
+                >
+                  {config.barcodeTextValue || config.codeValue}
                 </div>
               </div>
             )}
@@ -240,7 +338,7 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
       </div>
 
       {config.showPrice && (
-        <div 
+        <div
           className="flex flex-col items-center justify-center border-t border-dashed border-transparent relative shrink-0"
           style={{ height: `${config.serrilha}mm` }}
         >
@@ -251,8 +349,10 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
               </div>
             )}
             <div className="flex items-baseline gap-[3px]">
-              <span className="text-[13px] font-extrabold">{config.precoPrefix}</span>
-              <span 
+              <span className="text-[13px] font-extrabold">
+                {config.precoPrefix}
+              </span>
+              <span
                 className="font-black tracking-tighter"
                 style={{ fontSize: `${config.sizePreco}px` }}
               >
@@ -271,18 +371,19 @@ const SingleTag: React.FC<{ config: LabelConfig, isLast: boolean, colWidth: numb
   );
 };
 
-export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(({ config }, ref) => {
-  const colWidth = config.width / config.columns;
+export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
+  ({ config }, ref) => {
+    const colWidth = config.width / config.columns;
 
-  return (
-    <div 
-      ref={ref}
-      className="flex bg-white shadow-sm"
-      style={{ width: `${config.width}mm`, height: `${config.height}mm` }}
-    >
-      {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}
-      <style>
-        {`
+    return (
+      <div
+        ref={ref}
+        className="flex bg-white shadow-sm"
+        style={{ width: `${config.width}mm`, height: `${config.height}mm` }}
+      >
+        {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}
+        <style>
+          {`
           @media print {
             @page {
               size: ${config.width}mm ${config.height}mm;
@@ -291,18 +392,19 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(({ con
             body { margin: 0; padding: 0; background-color: white; }
           }
         `}
-      </style>
-      
-      {Array.from({ length: config.columns }).map((_, i) => (
-        <SingleTag 
-          key={i} 
-          config={config} 
-          isLast={i === config.columns - 1} 
-          colWidth={colWidth} 
-        />
-      ))}
-    </div>
-  );
-});
+        </style>
 
-LabelPreview.displayName = 'LabelPreview';
+        {Array.from({ length: config.columns }).map((_, i) => (
+          <SingleTag
+            key={i}
+            config={config}
+            isLast={i === config.columns - 1}
+            colWidth={colWidth}
+          />
+        ))}
+      </div>
+    );
+  },
+);
+
+LabelPreview.displayName = "LabelPreview";
