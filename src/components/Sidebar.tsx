@@ -576,9 +576,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               {config.labelType === "retail" ? (
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-600">
-                      Nome do Produto
-                    </label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-600">
+                        Nome do Produto
+                      </label>
+                      <div className="flex items-center gap-1 bg-white border border-slate-300 rounded p-0.5">
+                        <button
+                          onClick={() => updateConfig("produtoAlign", "left")}
+                          className={`p-1.5 rounded text-slate-600 ${config.produtoAlign === "left" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                        >
+                          <AlignLeft size={13} />
+                        </button>
+                        <button
+                          onClick={() => updateConfig("produtoAlign", "center")}
+                          className={`p-1.5 rounded text-slate-600 ${config.produtoAlign === "center" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                        >
+                          <AlignCenter size={13} />
+                        </button>
+                        <button
+                          onClick={() => updateConfig("produtoAlign", "right")}
+                          className={`p-1.5 rounded text-slate-600 ${config.produtoAlign === "right" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                        >
+                          <AlignRight size={13} />
+                        </button>
+                      </div>
+                    </div>
                     <input
                       type="text"
                       value={config.produto}
@@ -586,7 +608,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500"
                     />
                     <div className="flex items-center gap-2.5 mt-1">
-                      <span className="text-[10px] text-slate-500 uppercase font-bold">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold min-w-[65px]">
                         Tam. Fonte
                       </span>
                       <input
@@ -599,8 +621,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         }
                         className="flex-grow accent-blue-600"
                       />
-                      <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
+                      <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-9 text-center">
                         {config.sizeProduto}px
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 mt-1">
+                      <span className="text-[10px] text-slate-500 uppercase font-bold min-w-[65px]">
+                        Espaçamento
+                      </span>
+                      <input
+                        type="range"
+                        min="-10"
+                        max="20"
+                        step="0.5"
+                        value={config.produtoMarginTop || 0}
+                        onChange={(e) =>
+                          updateConfig("produtoMarginTop", Number(e.target.value))
+                        }
+                        className="flex-grow accent-blue-600"
+                      />
+                      <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-9 text-center">
+                        {config.produtoMarginTop || 0}
                       </span>
                     </div>
                   </div>
@@ -616,6 +658,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       >
                         <Plus size={12} /> Nova Linha
                       </button>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-200">
+                      <div className="flex items-center gap-2 w-1/2">
+                        <span className="text-[10px] text-slate-500 uppercase font-bold">Tam. Fonte</span>
+                        <input
+                          type="range"
+                          min="8"
+                          max="16"
+                          value={config.detailsSize}
+                          onChange={(e) => updateConfig("detailsSize", Number(e.target.value))}
+                          className="flex-grow accent-blue-600 w-16"
+                        />
+                        <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">{config.detailsSize}px</span>
+                      </div>
+
+                      <select
+                        value={config.detailsAlign}
+                        onChange={(e) => updateConfig("detailsAlign", e.target.value)}
+                        className="bg-white border border-slate-300 text-slate-800 px-2 py-1 rounded text-[10px] outline-none focus:border-blue-500 w-1/2 ml-2"
+                      >
+                        <option value="between">Espaçado (Esquerda/Direita)</option>
+                        <option value="left">Alinhado à Esquerda</option>
+                        <option value="center">Centralizado</option>
+                        <option value="right">Alinhado à Direita</option>
+                      </select>
                     </div>
 
                     {config.details.map((detail) => (
@@ -789,8 +857,32 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
 
             {config.codeType !== "NENHUM" && (
               <div className="flex flex-col gap-1 mt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">
+                    Posição Vertical do Bloco Inteiro (Cima/Baixo)
+                  </label>
+                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                    {config.codeMarginTop || 0}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="-20"
+                  max="20"
+                  step="0.5"
+                  value={config.codeMarginTop || 0}
+                  onChange={(e) =>
+                    updateConfig("codeMarginTop", Number(e.target.value))
+                  }
+                  className="w-full accent-blue-600"
+                />
+              </div>
+            )}
+
+            {config.codeType !== "NENHUM" && (
+              <div className="flex flex-col gap-1 mt-2">
                 <label className="text-xs font-semibold text-slate-600">
-                  Texto Visual (Opcional)
+                  Texto Visual do Código (Opcional)
                 </label>
                 <input
                   type="text"
@@ -808,7 +900,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               <div className="flex flex-col gap-1 mt-2">
                 <div className="flex items-center justify-between">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">
-                    Posição Vertical do Texto
+                    Posição Vertical Apenas do Texto
                   </label>
                   <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
                     {config.barcodeTextSpacing}

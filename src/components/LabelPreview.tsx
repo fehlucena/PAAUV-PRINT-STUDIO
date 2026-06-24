@@ -31,6 +31,7 @@ const SafeBarcode = ({ value, format }: { value: string; format: string }) => {
       <Barcode
         value={validValue || "000"}
         format={format as any}
+        renderer="svg"
         width={1.5}
         height={25}
         displayValue={false}
@@ -101,7 +102,7 @@ const SingleTag: React.FC<{
           {/* Info Row: Pedido, Transportadora, Peso, Volumes */}
           <div className="grid grid-cols-2 gap-[2mm] mb-[2mm] border-t-[1.5px] border-b-[1.5px] border-black py-[2mm] shrink-0">
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">
+              <span className="text-[8px] uppercase font-semibold text-black">
                 Transportadora
               </span>
               <span className="text-[10px] font-extrabold">
@@ -109,7 +110,7 @@ const SingleTag: React.FC<{
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">
+              <span className="text-[8px] uppercase font-semibold text-black">
                 Pedido / NFe
               </span>
               <span className="text-[10px] font-extrabold">
@@ -117,13 +118,13 @@ const SingleTag: React.FC<{
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">
+              <span className="text-[8px] uppercase font-semibold text-black">
                 Peso
               </span>
               <span className="text-[10px] font-extrabold">{config.peso}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-slate-600">
+              <span className="text-[8px] uppercase font-semibold text-black">
                 Volumes
               </span>
               <span className="text-[10px] font-extrabold">
@@ -134,7 +135,10 @@ const SingleTag: React.FC<{
 
           {/* Barcode */}
           {config.codeType !== "NENHUM" && (
-            <div className="flex flex-col items-center justify-center mt-auto min-h-[22mm] shrink-0 w-full pt-[1mm]">
+            <div 
+              className="flex flex-col items-center justify-center mt-auto min-h-[22mm] shrink-0 w-full pt-[1mm]"
+              style={{ marginTop: `${config.codeMarginTop}mm` }}
+            >
               {config.codeType !== "QR" ? (
                 <div className="flex flex-col items-center w-full">
                   <div className="w-full flex items-center justify-center overflow-hidden">
@@ -270,7 +274,7 @@ const SingleTag: React.FC<{
 
         <div
           className="font-extrabold leading-[1.1] mb-[1mm]"
-          style={{ fontSize: `${config.sizeProduto}px` }}
+          style={{ fontSize: `${config.sizeProduto}px`, textAlign: config.produtoAlign, marginTop: `${config.produtoMarginTop}mm` }}
         >
           {config.produto}
         </div>
@@ -281,12 +285,20 @@ const SingleTag: React.FC<{
             .map((d) => (
               <div
                 key={d.id}
-                className="flex justify-between text-[11px] border-b border-dotted border-[#ccc] pb-px"
+                className={`flex border-b border-dotted border-black pb-px ${
+                  config.detailsAlign === 'between' ? 'justify-between' : 
+                  config.detailsAlign === 'right' ? 'justify-end gap-1' : 
+                  config.detailsAlign === 'center' ? 'justify-center gap-1' : 'justify-start gap-1'
+                }`}
+                style={{ fontSize: `${config.detailsSize}px` }}
               >
-                <span className="text-[#555] font-semibold truncate pr-1">
+                <span className="text-black font-semibold truncate pr-1">
                   {d.label}
                 </span>
-                <span className="font-bold max-w-[70%] text-right truncate">
+                <span className={`font-bold max-w-[70%] truncate ${
+                  config.detailsAlign === 'between' ? 'text-right' : 
+                  config.detailsAlign === 'right' ? 'text-right' : 'text-left'
+                }`}>
                   {d.value}
                 </span>
               </div>
@@ -294,7 +306,10 @@ const SingleTag: React.FC<{
         </div>
 
         {config.codeType !== "NENHUM" && (
-          <div className="flex flex-col items-center justify-end shrink-0 w-full pt-[1mm]">
+          <div 
+            className="flex flex-col items-center justify-end shrink-0 w-full pt-[1mm]"
+            style={{ marginTop: `${config.codeMarginTop}mm` }}
+          >
             {config.codeType !== "QR" ? (
               <div className="flex flex-col items-center w-full">
                 <div className="w-full flex items-center justify-center overflow-hidden h-[12mm] mb-1">
@@ -360,7 +375,7 @@ const SingleTag: React.FC<{
               </span>
             </div>
             {config.isPromo && (
-              <div className="text-[11px] line-through text-[#555] font-extrabold mt-[-2px]">
+              <div className="text-[11px] line-through text-black font-extrabold mt-[-2px]">
                 {config.precoAntigo}
               </div>
             )}
