@@ -382,6 +382,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               </div>
             )}
 
+            <div className="flex items-center justify-between mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <div className="flex flex-col">
+                <span className="text-xs font-semibold text-amber-900">Girar 90º na Impressão</span>
+                <span className="text-[10px] text-amber-700">Se a impressora estiver cortando ou imprimindo de lado.</span>
+              </div>
+              <Switch
+                checked={config.printRotate90}
+                onChange={(c) => updateConfig("printRotate90", c)}
+              />
+            </div>
+
             <div className="flex flex-col gap-1.5 pt-4 border-t border-slate-100">
               <label className="text-xs font-semibold text-slate-600">
                 Margens Internas (Padding)

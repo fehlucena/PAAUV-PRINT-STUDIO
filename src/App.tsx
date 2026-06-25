@@ -18,6 +18,16 @@ export default function App() {
         }
       } catch (e) {}
     }
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key.toLowerCase() === 'p' || e.code === 'KeyP')) {
+        e.preventDefault();
+        handlePrint();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const handlePrint = () => {
@@ -32,15 +42,6 @@ export default function App() {
 
   return (
     <>
-      <style type="text/css" media="print">
-        {`
-          @page {
-            size: ${config.width}mm ${config.height}mm;
-            margin: 0;
-          }
-        `}
-      </style>
-
       {/* SCREEN LAYOUT */}
       <div className="h-screen flex flex-col bg-slate-100 overflow-hidden text-slate-800 font-sans print:hidden">
         <TopBar
