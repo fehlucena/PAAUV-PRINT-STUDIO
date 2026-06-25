@@ -17,7 +17,7 @@ import {
   Tag,
   Save,
   Star,
-  Edit2
+  Edit2,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -48,13 +48,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   const [activeTab, setActiveTab] = useState<
     "layout" | "content" | "barcode" | "price"
   >("layout");
-  const [savedPresets, setSavedPresets] = useState<Record<string, LabelConfig>>({});
+  const [savedPresets, setSavedPresets] = useState<Record<string, LabelConfig>>(
+    {},
+  );
   const [currentPresetName, setCurrentPresetName] = useState<string>("");
-  const [modalState, setModalState] = useState<{type: "save" | "rename" | "delete" | "alert" | null, message?: string}>({type: null});
+  const [modalState, setModalState] = useState<{
+    type: "save" | "rename" | "delete" | "alert" | null;
+    message?: string;
+  }>({ type: null });
   const [modalInput, setModalInput] = useState("");
 
   useEffect(() => {
-    const loaded = localStorage.getItem('paauv-presets');
+    const loaded = localStorage.getItem("paauv-presets");
     if (loaded) {
       try {
         setSavedPresets(JSON.parse(loaded));
@@ -71,7 +76,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
     if (name) {
       const newPresets = { ...savedPresets, [name]: config };
       setSavedPresets(newPresets);
-      localStorage.setItem('paauv-presets', JSON.stringify(newPresets));
+      localStorage.setItem("paauv-presets", JSON.stringify(newPresets));
       setCurrentPresetName(name);
     }
     setModalState({ type: null });
@@ -89,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
       newPresets[newName] = newPresets[currentPresetName];
       delete newPresets[currentPresetName];
       setSavedPresets(newPresets);
-      localStorage.setItem('paauv-presets', JSON.stringify(newPresets));
+      localStorage.setItem("paauv-presets", JSON.stringify(newPresets));
       setCurrentPresetName(newName);
     }
     setModalState({ type: null });
@@ -105,15 +110,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
       const newPresets = { ...savedPresets };
       delete newPresets[currentPresetName];
       setSavedPresets(newPresets);
-      localStorage.setItem('paauv-presets', JSON.stringify(newPresets));
+      localStorage.setItem("paauv-presets", JSON.stringify(newPresets));
       setCurrentPresetName("");
     }
     setModalState({ type: null });
   };
 
   const handleSetDefault = () => {
-    localStorage.setItem('paauv-default-preset', JSON.stringify(config));
-    setModalState({ type: "alert", message: "Configuração atual salva como o padrão ao abrir o aplicativo!" });
+    localStorage.setItem("paauv-default-preset", JSON.stringify(config));
+    setModalState({
+      type: "alert",
+      message: "Configuração atual salva como o padrão ao abrir o aplicativo!",
+    });
   };
 
   const handleLoadPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -573,7 +581,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       <input
                         type="range"
                         min="8"
-                        max="24"
+                        max="36"
                         value={config.sizeMarca}
                         onChange={(e) =>
                           updateConfig("sizeMarca", Number(e.target.value))
@@ -628,22 +636,131 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 </div>
               )}
 
+              <div className="flex items-center gap-2.5 mt-4 pt-2 border-t border-slate-200">
+                <span className="text-[10px] text-slate-500 uppercase font-bold w-16" title="Ajusta o espaçamento entre o cabeçalho e os elementos abaixo">
+                  Espaço Abaixo
+                </span>
+                <input
+                  type="range"
+                  min="-20"
+                  max="50"
+                  step="1"
+                  value={config.bodyMarginTop}
+                  onChange={(e) =>
+                    updateConfig("bodyMarginTop", Number(e.target.value))
+                  }
+                  className="flex-grow accent-amber-600"
+                />
+                <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-10 text-center">
+                  {config.bodyMarginTop}mm
+                </span>
+              </div>
+
+              {config.labelType === "retail" && (
+                <>
+                  <div className="flex items-center justify-between mt-4">
+                    <label className="text-xs font-semibold text-slate-600">
+                      Categoria/Setor (Canto Sup.)
+                    </label>
+                    <Switch
+                      checked={config.showCat}
+                      onChange={(c) => updateConfig("showCat", c)}
+                    />
+                  </div>
+                  {config.showCat && (
+                    <input
+                      type="text"
+                      value={config.cat}
+                      onChange={(e) => updateConfig("cat", e.target.value)}
+                      className="bg-white border border-slate-300 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-amber-500 mt-1"
+                    />
+                  )}
+                </>
+              )}
+
               <div className="flex items-center justify-between mt-4">
                 <label className="text-xs font-semibold text-slate-600">
-                  Categoria/Setor (Canto Sup.)
+                  Conteúdo (Texto Livre)
                 </label>
                 <Switch
-                  checked={config.showCat}
-                  onChange={(c) => updateConfig("showCat", c)}
+                  checked={config.showConteudo}
+                  onChange={(c) => updateConfig("showConteudo", c)}
                 />
               </div>
-              {config.showCat && (
-                <input
-                  type="text"
-                  value={config.cat}
-                  onChange={(e) => updateConfig("cat", e.target.value)}
-                  className="bg-white border border-slate-300 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-amber-500 mt-1"
-                />
+              {config.showConteudo && (
+                <div className="flex flex-col gap-3 p-3 bg-slate-50 rounded-md border border-slate-200 mt-2">
+                  <textarea
+                    rows={4}
+                    value={config.conteudoText}
+                    onChange={(e) =>
+                      updateConfig("conteudoText", e.target.value)
+                    }
+                    placeholder="Adicione texto livre aqui..."
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                  />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1 bg-white border border-slate-300 rounded p-0.5">
+                      <button
+                        onClick={() => updateConfig("conteudoAlign", "left")}
+                        className={`p-1.5 rounded text-slate-600 ${config.conteudoAlign === "left" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                      >
+                        <AlignLeft size={13} />
+                      </button>
+                      <button
+                        onClick={() => updateConfig("conteudoAlign", "center")}
+                        className={`p-1.5 rounded text-slate-600 ${config.conteudoAlign === "center" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                      >
+                        <AlignCenter size={13} />
+                      </button>
+                      <button
+                        onClick={() => updateConfig("conteudoAlign", "right")}
+                        className={`p-1.5 rounded text-slate-600 ${config.conteudoAlign === "right" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                      >
+                        <AlignRight size={13} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 mt-1">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold w-16">
+                      Tam. Fonte
+                    </span>
+                    <input
+                      type="range"
+                      min="8"
+                      max="48"
+                      value={config.conteudoSize}
+                      onChange={(e) =>
+                        updateConfig("conteudoSize", Number(e.target.value))
+                      }
+                      className="flex-grow accent-amber-600"
+                    />
+                    <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-10 text-center">
+                      {config.conteudoSize}px
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2.5 mt-1">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold w-16">
+                      Margem Top
+                    </span>
+                    <input
+                      type="range"
+                      min="-20"
+                      max="50"
+                      step="1"
+                      value={config.conteudoMarginTop}
+                      onChange={(e) =>
+                        updateConfig(
+                          "conteudoMarginTop",
+                          Number(e.target.value),
+                        )
+                      }
+                      className="flex-grow accent-amber-600"
+                    />
+                    <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-10 text-center">
+                      {config.conteudoMarginTop}mm
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -719,7 +836,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         step="0.5"
                         value={config.produtoMarginTop || 0}
                         onChange={(e) =>
-                          updateConfig("produtoMarginTop", Number(e.target.value))
+                          updateConfig(
+                            "produtoMarginTop",
+                            Number(e.target.value),
+                          )
                         }
                         className="flex-grow accent-amber-600"
                       />
@@ -744,24 +864,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
 
                     <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-200">
                       <div className="flex items-center gap-2 w-1/2">
-                        <span className="text-[10px] text-slate-500 uppercase font-bold">Tam. Fonte</span>
+                        <span className="text-[10px] text-slate-500 uppercase font-bold">
+                          Tam. Fonte
+                        </span>
                         <input
                           type="range"
                           min="8"
                           max="16"
                           value={config.detailsSize}
-                          onChange={(e) => updateConfig("detailsSize", Number(e.target.value))}
+                          onChange={(e) =>
+                            updateConfig("detailsSize", Number(e.target.value))
+                          }
                           className="flex-grow accent-amber-600 w-16"
                         />
-                        <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">{config.detailsSize}px</span>
+                        <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
+                          {config.detailsSize}px
+                        </span>
                       </div>
 
                       <select
                         value={config.detailsAlign}
-                        onChange={(e) => updateConfig("detailsAlign", e.target.value)}
+                        onChange={(e) =>
+                          updateConfig("detailsAlign", e.target.value)
+                        }
                         className="bg-white border border-slate-300 text-slate-800 px-2 py-1 rounded text-[10px] outline-none focus:border-amber-500 w-1/2 ml-2"
                       >
-                        <option value="between">Espaçado (Esquerda/Direita)</option>
+                        <option value="between">
+                          Espaçado (Esquerda/Direita)
+                        </option>
                         <option value="left">Alinhado à Esquerda</option>
                         <option value="center">Centralizado</option>
                         <option value="right">Alinhado à Direita</option>
@@ -817,10 +947,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         Remetente
                       </label>
                       <button
-                        onClick={() => updateConfig("showRemetente", !config.showRemetente)}
-                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showRemetente ? 'bg-amber-500' : 'bg-slate-300'}`}
+                        onClick={() =>
+                          updateConfig("showRemetente", !config.showRemetente)
+                        }
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showRemetente ? "bg-amber-500" : "bg-slate-300"}`}
                       >
-                        <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showRemetente ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                        <div
+                          className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showRemetente ? "translate-x-4" : "translate-x-0.5"}`}
+                        />
                       </button>
                     </div>
                     {config.showRemetente && (
@@ -834,14 +968,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
                         />
                         <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">Tam.</span>
+                          <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">
+                            Tam.
+                          </span>
                           <input
-                            type="range" min="6" max="16"
+                            type="range"
+                            min="6"
+                            max="16"
                             value={config.remetenteSize}
-                            onChange={(e) => updateConfig("remetenteSize", Number(e.target.value))}
+                            onChange={(e) =>
+                              updateConfig(
+                                "remetenteSize",
+                                Number(e.target.value),
+                              )
+                            }
                             className="flex-grow accent-amber-600"
                           />
-                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.remetenteSize}</span>
+                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
+                            {config.remetenteSize}
+                          </span>
                         </div>
                       </>
                     )}
@@ -852,10 +997,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         Destinatário
                       </label>
                       <button
-                        onClick={() => updateConfig("showDestinatario", !config.showDestinatario)}
-                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showDestinatario ? 'bg-amber-500' : 'bg-slate-300'}`}
+                        onClick={() =>
+                          updateConfig(
+                            "showDestinatario",
+                            !config.showDestinatario,
+                          )
+                        }
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showDestinatario ? "bg-amber-500" : "bg-slate-300"}`}
                       >
-                        <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showDestinatario ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                        <div
+                          className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showDestinatario ? "translate-x-4" : "translate-x-0.5"}`}
+                        />
                       </button>
                     </div>
                     {config.showDestinatario && (
@@ -870,40 +1022,68 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         />
                         <div className="flex flex-col gap-1.5 mt-1 bg-white border border-slate-100 p-2 rounded">
                           <div className="flex items-center gap-2">
-                            <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">Tam.</span>
+                            <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">
+                              Tam.
+                            </span>
                             <input
-                              type="range" min="8" max="24"
+                              type="range"
+                              min="8"
+                              max="24"
                               value={config.destinatarioSize}
-                              onChange={(e) => updateConfig("destinatarioSize", Number(e.target.value))}
+                              onChange={(e) =>
+                                updateConfig(
+                                  "destinatarioSize",
+                                  Number(e.target.value),
+                                )
+                              }
                               className="flex-grow accent-amber-600"
                             />
-                            <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.destinatarioSize}</span>
+                            <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
+                              {config.destinatarioSize}
+                            </span>
                           </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">Espaç.</span>
+                          
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]" title="Margem Top">
+                              Margem
+                            </span>
                             <input
-                              type="range" min="-5" max="15" step="0.5"
+                              type="range"
+                              min="-20"
+                              max="50"
+                              step="1"
                               value={config.destinatarioMarginTop}
-                              onChange={(e) => updateConfig("destinatarioMarginTop", Number(e.target.value))}
+                              onChange={(e) =>
+                                updateConfig(
+                                  "destinatarioMarginTop",
+                                  Number(e.target.value),
+                                )
+                              }
                               className="flex-grow accent-amber-600"
                             />
-                            <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.destinatarioMarginTop}</span>
+                            <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
+                              {config.destinatarioMarginTop}
+                            </span>
                           </div>
                         </div>
                       </>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col gap-1 border border-slate-200 p-2 rounded-md bg-slate-50">
                     <div className="flex items-center justify-between mb-1">
                       <label className="text-[10px] font-bold text-slate-500 uppercase">
                         Informações (Pedido, Peso, etc)
                       </label>
                       <button
-                        onClick={() => updateConfig("showInfoRow", !config.showInfoRow)}
-                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showInfoRow ? 'bg-amber-500' : 'bg-slate-300'}`}
+                        onClick={() =>
+                          updateConfig("showInfoRow", !config.showInfoRow)
+                        }
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showInfoRow ? "bg-amber-500" : "bg-slate-300"}`}
                       >
-                        <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showInfoRow ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                        <div
+                          className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showInfoRow ? "translate-x-4" : "translate-x-0.5"}`}
+                        />
                       </button>
                     </div>
                     {config.showInfoRow && (
@@ -916,7 +1096,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             <input
                               type="text"
                               value={config.pedido}
-                              onChange={(e) => updateConfig("pedido", e.target.value)}
+                              onChange={(e) =>
+                                updateConfig("pedido", e.target.value)
+                              }
                               className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
                             />
                           </div>
@@ -927,7 +1109,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             <input
                               type="text"
                               value={config.peso}
-                              onChange={(e) => updateConfig("peso", e.target.value)}
+                              onChange={(e) =>
+                                updateConfig("peso", e.target.value)
+                              }
                               className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
                             />
                           </div>
@@ -938,7 +1122,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             <input
                               type="text"
                               value={config.volumes}
-                              onChange={(e) => updateConfig("volumes", e.target.value)}
+                              onChange={(e) =>
+                                updateConfig("volumes", e.target.value)
+                              }
                               className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
                             />
                           </div>
@@ -949,165 +1135,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             <input
                               type="text"
                               value={config.transportadora}
-                              onChange={(e) => updateConfig("transportadora", e.target.value)}
+                              onChange={(e) =>
+                                updateConfig("transportadora", e.target.value)
+                              }
                               className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
                             />
                           </div>
                         </div>
-                        
+
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[70px]">Tam. Infos</span>
+                          <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[70px]">
+                            Tam. Infos
+                          </span>
                           <input
-                            type="range" min="6" max="16"
+                            type="range"
+                            min="6"
+                            max="16"
                             value={config.infoRowSize}
-                            onChange={(e) => updateConfig("infoRowSize", Number(e.target.value))}
+                            onChange={(e) =>
+                              updateConfig(
+                                "infoRowSize",
+                                Number(e.target.value),
+                              )
+                            }
                             className="flex-grow accent-amber-600"
                           />
-                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.infoRowSize}</span>
+                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
+                            {config.infoRowSize}
+                          </span>
                         </div>
                       </>
                     )}
-                  </div>
-                  
-                  {/* Elementos Livres */}
-                  <div className="flex flex-col gap-1 border border-slate-200 p-2 rounded-md bg-slate-50 mt-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">
-                        Elementos Livres
-                      </label>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => {
-                            const newEl: CustomElement = {
-                              id: Math.random().toString(36).substring(7),
-                              type: "text",
-                              x: 10, y: 10,
-                              content: "Novo Texto",
-                              fontSize: 12,
-                              fontWeight: "normal"
-                            };
-                            updateConfig("customElements", [...(config.customElements || []), newEl]);
-                          }}
-                          className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-semibold hover:bg-amber-50 shadow-sm"
-                        >
-                          + Texto
-                        </button>
-                        <button
-                          onClick={() => {
-                            const newEl: CustomElement = {
-                              id: Math.random().toString(36).substring(7),
-                              type: "rect",
-                              x: 10, y: 10,
-                              width: 30,
-                              height: 30,
-                              borderWidth: 1
-                            };
-                            updateConfig("customElements", [...(config.customElements || []), newEl]);
-                          }}
-                          className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-semibold hover:bg-amber-50 shadow-sm"
-                        >
-                          + Retângulo
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      {(config.customElements || []).map((el) => (
-                        <div key={el.id} className="flex flex-col gap-1 bg-white border border-slate-200 p-2 rounded relative">
-                          <button
-                            onClick={() => {
-                              updateConfig(
-                                "customElements",
-                                config.customElements.filter((c) => c.id !== el.id)
-                              );
-                            }}
-                            className="absolute top-1 right-1 text-slate-400 hover:text-red-500 p-0.5"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                          
-                          <div className="flex items-center gap-2 pr-6">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase min-w-[30px]">
-                              {el.type === "text" ? "Texto" : "Forma"}
-                            </span>
-                            {el.type === "text" && (
-                              <input
-                                type="text"
-                                value={el.content || ""}
-                                onChange={(e) => {
-                                  updateConfig(
-                                    "customElements",
-                                    config.customElements.map((c) => c.id === el.id ? { ...c, content: e.target.value } : c)
-                                  );
-                                }}
-                                className="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded text-[10px] flex-grow outline-none focus:border-amber-500"
-                              />
-                            )}
-                          </div>
-                          
-                          <div className="grid grid-cols-2 gap-1 mt-1">
-                            {el.type === "text" && (
-                              <>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] text-slate-500">Tam.</span>
-                                  <input
-                                    type="number"
-                                    value={el.fontSize || 12}
-                                    onChange={(e) => {
-                                      updateConfig(
-                                        "customElements",
-                                        config.customElements.map((c) => c.id === el.id ? { ...c, fontSize: Number(e.target.value) } : c)
-                                      );
-                                    }}
-                                    className="bg-slate-50 border border-slate-300 px-1 py-0.5 rounded text-[9px] w-full outline-none focus:border-amber-500"
-                                  />
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] text-slate-500">Peso</span>
-                                  <select
-                                    value={el.fontWeight || "normal"}
-                                    onChange={(e) => {
-                                      updateConfig(
-                                        "customElements",
-                                        config.customElements.map((c) => c.id === el.id ? { ...c, fontWeight: e.target.value } : c)
-                                      );
-                                    }}
-                                    className="bg-slate-50 border border-slate-300 px-1 py-0.5 rounded text-[9px] w-full outline-none focus:border-amber-500"
-                                  >
-                                    <option value="normal">Normal</option>
-                                    <option value="bold">Negrito</option>
-                                    <option value="900">Black</option>
-                                  </select>
-                                </div>
-                              </>
-                            )}
-                            {el.type === "rect" && (
-                              <>
-                                <div className="flex items-center gap-1">
-                                  <span className="text-[9px] text-slate-500">Borda</span>
-                                  <input
-                                    type="number" min="0" step="0.5"
-                                    value={el.borderWidth ?? 1}
-                                    onChange={(e) => {
-                                      updateConfig(
-                                        "customElements",
-                                        config.customElements.map((c) => c.id === el.id ? { ...c, borderWidth: Number(e.target.value) } : c)
-                                      );
-                                    }}
-                                    className="bg-slate-50 border border-slate-300 px-1 py-0.5 rounded text-[9px] w-full outline-none focus:border-amber-500"
-                                  />
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                      {(!config.customElements || config.customElements.length === 0) && (
-                        <p className="text-[9px] text-slate-400 text-center italic py-2">
-                          Nenhum elemento livre. Adicione textos ou retângulos.
-                        </p>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
@@ -1159,93 +1217,118 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               </div>
             )}
 
-            {config.codeType !== "NENHUM" && (
-              <div className="flex flex-col gap-1 mt-2">
-                <div className="flex items-center justify-between">
+            {config.codeType !== "NENHUM" &&
+              config.labelType === "logistics" && (
+                <div className="flex flex-col gap-1.5 mt-2">
                   <label className="text-[10px] font-bold text-slate-500 uppercase">
-                    Posição Vertical do Bloco Inteiro (Cima/Baixo)
+                    Alinhamento do Código
                   </label>
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                    {config.codeMarginTop || 0}
-                  </span>
+                  <div className="flex items-center gap-1 bg-white border border-slate-300 rounded p-0.5 w-max">
+                    <button
+                      onClick={() => updateConfig("codeAlign", "left")}
+                      className={`p-1.5 rounded text-slate-600 ${config.codeAlign === "left" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                    >
+                      <AlignLeft size={13} />
+                    </button>
+                    <button
+                      onClick={() => updateConfig("codeAlign", "center")}
+                      className={`p-1.5 rounded text-slate-600 ${config.codeAlign === "center" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                    >
+                      <AlignCenter size={13} />
+                    </button>
+                    <button
+                      onClick={() => updateConfig("codeAlign", "right")}
+                      className={`p-1.5 rounded text-slate-600 ${config.codeAlign === "right" ? "bg-slate-200 text-slate-900 shadow-sm" : "hover:bg-slate-100"}`}
+                    >
+                      <AlignRight size={13} />
+                    </button>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="-20"
-                  max="20"
-                  step="0.5"
-                  value={config.codeMarginTop || 0}
-                  onChange={(e) =>
-                    updateConfig("codeMarginTop", Number(e.target.value))
-                  }
-                  className="w-full accent-amber-600"
-                />
-              </div>
-            )}
+              )}
 
-            {config.codeType !== "NENHUM" && (
-              <div className="flex flex-col gap-1 mt-2">
-                <label className="text-xs font-semibold text-slate-600">
-                  Texto Visual do Código (Opcional)
-                </label>
-                <input
-                  type="text"
-                  value={config.barcodeTextValue || ""}
-                  onChange={(e) =>
-                    updateConfig("barcodeTextValue", e.target.value)
-                  }
-                  placeholder="Deixe vazio para mostrar o valor acima"
-                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 font-mono"
-                />
-              </div>
-            )}
+            {config.codeType !== "NENHUM" && config.labelType === "retail" && (
+              <>
+                <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">
+                      Posição Vertical do Bloco Inteiro (Cima/Baixo)
+                    </label>
+                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                      {config.codeMarginTop || 0}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-20"
+                    max="20"
+                    step="0.5"
+                    value={config.codeMarginTop || 0}
+                    onChange={(e) =>
+                      updateConfig("codeMarginTop", Number(e.target.value))
+                    }
+                    className="w-full accent-amber-600"
+                  />
+                </div>
 
-            {config.codeType !== "NENHUM" && (
-              <div className="flex flex-col gap-1 mt-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">
-                    Posição Vertical Apenas do Texto
+                <div className="flex flex-col gap-1 mt-2">
+                  <label className="text-xs font-semibold text-slate-600">
+                    Texto Visual do Código (Opcional)
                   </label>
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                    {config.barcodeTextSpacing}
-                  </span>
+                  <input
+                    type="text"
+                    value={config.barcodeTextValue || ""}
+                    onChange={(e) =>
+                      updateConfig("barcodeTextValue", e.target.value)
+                    }
+                    placeholder="Deixe vazio para mostrar o valor acima"
+                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 font-mono"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="-15"
-                  max="15"
-                  step="0.5"
-                  value={config.barcodeTextSpacing}
-                  onChange={(e) =>
-                    updateConfig("barcodeTextSpacing", Number(e.target.value))
-                  }
-                  className="w-full accent-amber-600"
-                />
-              </div>
-            )}
 
-            {config.codeType !== "NENHUM" && (
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase">
-                    Tamanho do Texto (px)
-                  </label>
-                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                    {config.barcodeTextSize}
-                  </span>
+                <div className="flex flex-col gap-1 mt-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">
+                      Posição Vertical Apenas do Texto
+                    </label>
+                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                      {config.barcodeTextSpacing}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-15"
+                    max="15"
+                    step="0.5"
+                    value={config.barcodeTextSpacing}
+                    onChange={(e) =>
+                      updateConfig("barcodeTextSpacing", Number(e.target.value))
+                    }
+                    className="w-full accent-amber-600"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="6"
-                  max="24"
-                  step="0.5"
-                  value={config.barcodeTextSize}
-                  onChange={(e) =>
-                    updateConfig("barcodeTextSize", Number(e.target.value))
-                  }
-                  className="w-full accent-amber-600"
-                />
-              </div>
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">
+                      Tamanho do Texto (px)
+                    </label>
+                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                      {config.barcodeTextSize}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="6"
+                    max="24"
+                    step="0.5"
+                    value={config.barcodeTextSize}
+                    onChange={(e) =>
+                      updateConfig("barcodeTextSize", Number(e.target.value))
+                    }
+                    className="w-full accent-amber-600"
+                  />
+                </div>
+              </>
             )}
 
             <div className="text-[11px] text-slate-600 bg-amber-50 p-3 rounded-md border border-amber-100 leading-relaxed mt-2">
@@ -1396,26 +1479,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
           </h3>
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              <select 
+              <select
                 onChange={handleLoadPreset}
                 className="bg-white border border-slate-300 text-slate-700 px-2 py-1.5 rounded-md text-xs outline-none focus:border-amber-500 flex-1 shadow-sm font-medium"
                 value={currentPresetName || ""}
               >
                 <option value="">Nenhum / Novo...</option>
-                {Object.keys(savedPresets).map(name => (
-                  <option key={name} value={name}>{name}</option>
+                {Object.keys(savedPresets).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
                 ))}
               </select>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-2 mt-1">
-              <button 
+              <button
                 onClick={handleSavePreset}
                 className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
-                <Save size={12} /> {currentPresetName ? "Sobrescrever" : "Salvar Novo"}
+                <Save size={12} />{" "}
+                {currentPresetName ? "Sobrescrever" : "Salvar Novo"}
               </button>
-              <button 
+              <button
                 onClick={handleSetDefault}
                 className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
@@ -1423,13 +1509,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               </button>
               {currentPresetName && (
                 <>
-                  <button 
+                  <button
                     onClick={handleRenamePreset}
                     className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
                   >
                     <Edit2 size={12} /> Renomear
                   </button>
-                  <button 
+                  <button
                     onClick={handleDeletePreset}
                     className="bg-white border border-red-300 text-red-600 hover:text-white p-1.5 rounded text-xs font-semibold hover:bg-red-500 transition-colors flex items-center justify-center gap-1 shadow-sm"
                   >
@@ -1448,9 +1534,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
           <div className="bg-white rounded-lg shadow-xl w-full p-4 flex flex-col gap-4">
             {modalState.type === "save" && (
               <>
-                <h4 className="text-sm font-bold text-slate-800">Salvar Preset</h4>
+                <h4 className="text-sm font-bold text-slate-800">
+                  Salvar Preset
+                </h4>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-slate-600">Nome do Preset:</label>
+                  <label className="text-xs text-slate-600">
+                    Nome do Preset:
+                  </label>
                   <input
                     type="text"
                     value={modalInput}
@@ -1461,15 +1551,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   />
                 </div>
                 <div className="flex justify-end gap-2 mt-2">
-                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                  <button onClick={() => executeSavePreset(modalInput)} className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm">Salvar</button>
+                  <button
+                    onClick={() => setModalState({ type: null })}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => executeSavePreset(modalInput)}
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm"
+                  >
+                    Salvar
+                  </button>
                 </div>
               </>
             )}
 
             {modalState.type === "rename" && (
               <>
-                <h4 className="text-sm font-bold text-slate-800">Renomear Preset</h4>
+                <h4 className="text-sm font-bold text-slate-800">
+                  Renomear Preset
+                </h4>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs text-slate-600">Novo Nome:</label>
                   <input
@@ -1482,19 +1584,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   />
                 </div>
                 <div className="flex justify-end gap-2 mt-2">
-                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                  <button onClick={() => executeRenamePreset(modalInput)} className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm">Renomear</button>
+                  <button
+                    onClick={() => setModalState({ type: null })}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => executeRenamePreset(modalInput)}
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm"
+                  >
+                    Renomear
+                  </button>
                 </div>
               </>
             )}
 
             {modalState.type === "delete" && (
               <>
-                <h4 className="text-sm font-bold text-slate-800">Excluir Preset</h4>
-                <p className="text-xs text-slate-600">Tem certeza que deseja excluir o preset "{currentPresetName}"?</p>
+                <h4 className="text-sm font-bold text-slate-800">
+                  Excluir Preset
+                </h4>
+                <p className="text-xs text-slate-600">
+                  Tem certeza que deseja excluir o preset "{currentPresetName}"?
+                </p>
                 <div className="flex justify-end gap-2 mt-2">
-                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
-                  <button onClick={() => executeDeletePreset()} className="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded shadow-sm">Excluir</button>
+                  <button
+                    onClick={() => setModalState({ type: null })}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => executeDeletePreset()}
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded shadow-sm"
+                  >
+                    Excluir
+                  </button>
                 </div>
               </>
             )}
@@ -1504,7 +1630,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 <h4 className="text-sm font-bold text-slate-800">Aviso</h4>
                 <p className="text-xs text-slate-600">{modalState.message}</p>
                 <div className="flex justify-end mt-2">
-                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm">OK</button>
+                  <button
+                    onClick={() => setModalState({ type: null })}
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm"
+                  >
+                    OK
+                  </button>
                 </div>
               </>
             )}

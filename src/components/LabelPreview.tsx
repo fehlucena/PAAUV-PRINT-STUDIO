@@ -53,208 +53,6 @@ const SingleTag: React.FC<{
   colWidth: number;
   updateConfig?: (key: keyof LabelConfig, value: any) => void;
 }> = ({ config, isLast, colWidth, updateConfig }) => {
-  if (config.labelType === "logistics") {
-    return (
-      <div
-        className={`flex flex-col overflow-hidden text-black bg-white relative ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
-        style={{
-          width: `${colWidth}mm`,
-          height: `${config.height}mm`,
-          fontFamily: config.fontFamily,
-        }}
-      >
-        <div
-          className="flex flex-col h-full w-full"
-          style={{
-            paddingTop: `${config.paddingTop ?? 4}mm`,
-            paddingBottom: `${config.paddingBottom ?? 2}mm`,
-            paddingLeft: `${config.paddingHorizontal ?? 3}mm`,
-            paddingRight: `${config.paddingHorizontal ?? 3}mm`,
-          }}
-        >
-          {/* Top section: Remetente & Logo */}
-          <div className="flex justify-between items-start pb-[2mm] mb-[2mm] relative">
-            {config.showRemetente && (
-              <div className="flex flex-col w-[65%] pr-1">
-                <span className="font-extrabold uppercase mb-[1mm]" style={{ fontSize: `${config.remetenteSize}px` }}>
-                  Remetente
-                </span>
-                <span className="leading-tight whitespace-pre-wrap" style={{ fontSize: `${config.remetenteSize}px` }}>
-                  {config.remetente}
-                </span>
-              </div>
-            )}
-            {(!config.showRemetente) && <div className="flex-grow" />}
-            {config.showLogo && config.logoBase64 && (
-              <img
-                src={config.logoBase64}
-                alt="Logo"
-                className="max-w-[30%] object-contain shrink-0"
-                style={{ maxHeight: `${config.logoSize}mm` }}
-              />
-            )}
-          </div>
-          {(config.showRemetente || (config.showLogo && config.logoBase64)) && (
-            <div className="w-full border-b-[1.5px] border-black mb-[2mm]" />
-          )}
-
-          {/* Destinatário */}
-          {config.showDestinatario && (
-            <div className="flex flex-col mb-[2mm] flex-grow">
-              <span className="font-extrabold uppercase mb-[1mm] bg-black text-white px-1.5 py-0.5 self-start rounded-sm tracking-widest" style={{ fontSize: `${config.destinatarioSize - 4}px` }}>
-                Destinatário
-              </span>
-              <span className="font-bold leading-snug whitespace-pre-wrap" style={{ fontSize: `${config.destinatarioSize}px`, marginTop: `${config.destinatarioMarginTop}mm` }}>
-                {config.destinatario}
-              </span>
-            </div>
-          )}
-
-          {/* Info Row: Pedido, Transportadora, Peso, Volumes */}
-          {config.showInfoRow && (
-            <div className="grid grid-cols-2 gap-[2mm] mb-[2mm] border-t-[1.5px] border-b-[1.5px] border-black py-[2mm] shrink-0">
-              <div className="flex flex-col">
-                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
-                  Transportadora
-                </span>
-                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>
-                  {config.transportadora}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
-                  Pedido / NFe
-                </span>
-                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>
-                  {config.pedido}
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
-                  Peso
-                </span>
-                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>{config.peso}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
-                  Volumes
-                </span>
-                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>
-                  {config.volumes}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Custom Elements rendering overlay */}
-          {(config.customElements || []).map((el) => {
-            const isText = el.type === "text";
-            
-            return (
-              <Rnd
-                key={el.id}
-                bounds="parent"
-                position={{ x: el.x, y: el.y }}
-                size={el.type === "rect" ? { width: el.width || 30, height: el.height || 30 } : undefined}
-                enableResizing={el.type === "rect"}
-                disableDragging={!updateConfig}
-                onDragStop={(e, d) => {
-                  if (updateConfig && config.customElements) {
-                    updateConfig(
-                      "customElements",
-                      config.customElements.map((c) => c.id === el.id ? { ...c, x: d.x, y: d.y } : c)
-                    );
-                  }
-                }}
-                onResizeStop={(e, direction, ref, delta, position) => {
-                  if (updateConfig && config.customElements && el.type === "rect") {
-                    updateConfig(
-                      "customElements",
-                      config.customElements.map((c) => c.id === el.id ? {
-                        ...c,
-                        width: ref.offsetWidth,
-                        height: ref.offsetHeight,
-                        ...position
-                      } : c)
-                    );
-                  }
-                }}
-                className={`absolute z-10 ${updateConfig ? "hover:outline hover:outline-1 hover:outline-blue-500 cursor-move" : ""}`}
-                style={{
-                  border: isText ? "none" : `${el.borderWidth ?? 1}px solid black`,
-                  backgroundColor: isText ? "transparent" : "transparent"
-                }}
-              >
-                {isText && (
-                  <div
-                    style={{
-                      fontSize: `${el.fontSize || 12}px`,
-                      fontWeight: el.fontWeight || "normal",
-                      whiteSpace: "nowrap"
-                    }}
-                  >
-                    {el.content}
-                  </div>
-                )}
-              </Rnd>
-            );
-          })}
-
-          {/* Barcode */}
-          {config.codeType !== "NENHUM" && (
-            <div 
-              className="flex flex-col items-center justify-center mt-auto min-h-[22mm] shrink-0 w-full pt-[1mm]"
-              style={{ marginTop: `${config.codeMarginTop}mm` }}
-            >
-              {config.codeType !== "QR" ? (
-                <div className="flex flex-col items-center w-full">
-                  <div className="w-full flex items-center justify-center overflow-hidden">
-                    <SafeBarcode
-                      value={config.codeValue}
-                      format={config.codeType}
-                    />
-                  </div>
-                  <div
-                    className="font-mono font-bold tracking-[2px] text-center w-full truncate"
-                    style={{
-                      marginTop: `${config.barcodeTextSpacing}mm`,
-                      fontSize: `${config.barcodeTextSize}px`,
-                    }}
-                  >
-                    {config.barcodeTextValue || config.codeValue}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center w-full">
-                  <div className="h-[20mm]">
-                    <QRCode
-                      value={config.codeValue || "000"}
-                      size={256}
-                      style={{
-                        height: "100%",
-                        maxWidth: "100%",
-                        width: "100%",
-                      }}
-                    />
-                  </div>
-                  <div
-                    className="font-mono font-bold tracking-[1px] text-center w-full truncate"
-                    style={{
-                      marginTop: `${config.barcodeTextSpacing}mm`,
-                      fontSize: `${config.barcodeTextSize}px`,
-                    }}
-                  >
-                    {config.barcodeTextValue || config.codeValue}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
   const renderHeaderLayout = () => {
     const logoEl =
       config.showLogo && config.logoBase64 ? (
@@ -306,6 +104,221 @@ const SingleTag: React.FC<{
     );
   };
 
+  if (config.labelType === "logistics") {
+    return (
+      <div
+        className={`flex flex-col overflow-hidden text-black bg-white relative ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
+        style={{
+          width: `${colWidth}mm`,
+          height: `${config.height}mm`,
+          fontFamily: config.fontFamily,
+        }}
+      >
+        <div
+          className="flex flex-col h-full w-full"
+          style={{
+            paddingTop: `${config.paddingTop ?? 4}mm`,
+            paddingBottom: `${config.paddingBottom ?? 2}mm`,
+            paddingLeft: `${config.paddingHorizontal ?? 3}mm`,
+            paddingRight: `${config.paddingHorizontal ?? 3}mm`,
+          }}
+        >
+          {/* Logo and Marca Header using renderHeaderLayout style */}
+          <div className={`flex justify-${config.headerLayout === 'logo-right' ? 'end' : config.headerLayout === 'space-between' ? 'between' : 'start'} w-full mb-[2mm] shrink-0`}>
+             {renderHeaderLayout()}
+          </div>
+
+          {/* Container for elements below header that can be adjusted vertically */}
+          <div style={{ marginTop: `${config.bodyMarginTop}mm` }} className="flex flex-col flex-grow relative">
+
+            {/* Top section: Remetente */}
+            <div className="flex justify-between items-start pb-[2mm] relative">
+              {config.showRemetente && (
+                <div className="flex flex-col w-[100%] pr-1">
+                  <span
+                    className="font-extrabold uppercase mb-[1mm]"
+                    style={{ fontSize: `${config.remetenteSize}px` }}
+                  >
+                    Remetente
+                  </span>
+                  <span
+                    className="leading-tight whitespace-pre-wrap"
+                    style={{ fontSize: `${config.remetenteSize}px` }}
+                  >
+                    {config.remetente}
+                  </span>
+                </div>
+              )}
+            </div>
+            {config.showRemetente && (
+              <div className="w-full border-b-[1.5px] border-black mb-[2mm]" />
+            )}
+            
+            {/* Conteudo (Custom Text Body) */}
+            {config.showConteudo && (
+              <div
+                className={`flex flex-col mb-[2mm] whitespace-pre-wrap ${config.conteudoAlign === "center" ? "text-center" : config.conteudoAlign === "right" ? "text-right" : "text-left"}`}
+                style={{
+                  fontSize: `${config.conteudoSize}px`,
+                  marginTop: `${config.conteudoMarginTop}mm`,
+                }}
+              >
+                {config.conteudoText}
+              </div>
+            )}
+
+            {/* Destinatário */}
+          {config.showDestinatario && (
+            <div 
+              className="flex flex-col mb-[2mm] flex-grow"
+              style={{ marginTop: `${config.destinatarioMarginTop}mm` }}
+            >
+              <span
+                className="font-extrabold uppercase mb-[1mm] bg-black text-white px-1.5 py-0.5 self-start rounded-sm tracking-widest"
+                style={{ fontSize: `${config.destinatarioSize - 4}px` }}
+              >
+                Destinatário
+              </span>
+              <span
+                className="font-bold leading-snug whitespace-pre-wrap"
+                style={{
+                  fontSize: `${config.destinatarioSize}px`,
+                }}
+              >
+                {config.destinatario}
+              </span>
+            </div>
+          )}
+
+          {/* Info Row: Pedido, Transportadora, Peso, Volumes */}
+          {config.showInfoRow && (
+            <div className="grid grid-cols-2 gap-[2mm] mb-[2mm] border-t-[1.5px] border-b-[1.5px] border-black py-[2mm] shrink-0">
+              <div className="flex flex-col">
+                <span
+                  className="uppercase font-semibold text-black"
+                  style={{ fontSize: `${config.infoRowSize - 2}px` }}
+                >
+                  Transportadora
+                </span>
+                <span
+                  className="font-extrabold"
+                  style={{ fontSize: `${config.infoRowSize}px` }}
+                >
+                  {config.transportadora}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span
+                  className="uppercase font-semibold text-black"
+                  style={{ fontSize: `${config.infoRowSize - 2}px` }}
+                >
+                  Pedido / NFe
+                </span>
+                <span
+                  className="font-extrabold"
+                  style={{ fontSize: `${config.infoRowSize}px` }}
+                >
+                  {config.pedido}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span
+                  className="uppercase font-semibold text-black"
+                  style={{ fontSize: `${config.infoRowSize - 2}px` }}
+                >
+                  Peso
+                </span>
+                <span
+                  className="font-extrabold"
+                  style={{ fontSize: `${config.infoRowSize}px` }}
+                >
+                  {config.peso}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span
+                  className="uppercase font-semibold text-black"
+                  style={{ fontSize: `${config.infoRowSize - 2}px` }}
+                >
+                  Volumes
+                </span>
+                <span
+                  className="font-extrabold"
+                  style={{ fontSize: `${config.infoRowSize}px` }}
+                >
+                  {config.volumes}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Movable Barcode for Logistics */}
+          {config.codeType !== "NENHUM" && (
+            <Rnd
+              bounds="parent"
+              position={{ x: config.codeX || 10, y: config.codeY || 180 }}
+              disableDragging={!updateConfig}
+              onDragStop={(e, d) => {
+                if (updateConfig) {
+                  updateConfig("codeX", d.x);
+                  updateConfig("codeY", d.y);
+                }
+              }}
+              className={`absolute z-20 ${updateConfig ? "hover:outline hover:outline-1 hover:outline-blue-500 cursor-move" : ""}`}
+            >
+              <div className="flex flex-col items-center justify-center shrink-0 w-full">
+                {config.codeType !== "QR" ? (
+                  <div className="flex flex-col items-center bg-white p-1 rounded">
+                    <div className="flex items-center justify-center overflow-hidden">
+                      <SafeBarcode
+                        value={config.codeValue}
+                        format={config.codeType}
+                      />
+                    </div>
+                    <div
+                      className="font-mono font-bold tracking-[2px] text-center w-full truncate"
+                      style={{
+                        marginTop: `1mm`,
+                        fontSize: `10px`,
+                      }}
+                    >
+                      {config.codeValue}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center w-full bg-white p-1 rounded">
+                    <div className="h-[20mm]">
+                      <QRCode
+                        value={config.codeValue || "000"}
+                        size={256}
+                        style={{
+                          height: "100%",
+                          maxWidth: "100%",
+                          width: "100%",
+                        }}
+                      />
+                    </div>
+                    <div
+                      className="font-mono font-bold tracking-[1px] text-center w-full truncate"
+                      style={{
+                        marginTop: `1mm`,
+                        fontSize: `10px`,
+                      }}
+                    >
+                      {config.codeValue}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Rnd>
+          )}
+
+          </div> {/* Closes elements below header container */}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`flex flex-col overflow-hidden text-black bg-white ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
@@ -341,7 +354,11 @@ const SingleTag: React.FC<{
 
         <div
           className="font-extrabold leading-[1.1] mb-[1mm]"
-          style={{ fontSize: `${config.sizeProduto}px`, textAlign: config.produtoAlign, marginTop: `${config.produtoMarginTop}mm` }}
+          style={{
+            fontSize: `${config.sizeProduto}px`,
+            textAlign: config.produtoAlign,
+            marginTop: `${config.produtoMarginTop}mm`,
+          }}
         >
           {config.produto}
         </div>
@@ -353,19 +370,28 @@ const SingleTag: React.FC<{
               <div
                 key={d.id}
                 className={`flex border-b border-dotted border-black pb-px ${
-                  config.detailsAlign === 'between' ? 'justify-between' : 
-                  config.detailsAlign === 'right' ? 'justify-end gap-1' : 
-                  config.detailsAlign === 'center' ? 'justify-center gap-1' : 'justify-start gap-1'
+                  config.detailsAlign === "between"
+                    ? "justify-between"
+                    : config.detailsAlign === "right"
+                      ? "justify-end gap-1"
+                      : config.detailsAlign === "center"
+                        ? "justify-center gap-1"
+                        : "justify-start gap-1"
                 }`}
                 style={{ fontSize: `${config.detailsSize}px` }}
               >
                 <span className="text-black font-semibold truncate pr-1">
                   {d.label}
                 </span>
-                <span className={`font-bold max-w-[70%] truncate ${
-                  config.detailsAlign === 'between' ? 'text-right' : 
-                  config.detailsAlign === 'right' ? 'text-right' : 'text-left'
-                }`}>
+                <span
+                  className={`font-bold max-w-[70%] truncate ${
+                    config.detailsAlign === "between"
+                      ? "text-right"
+                      : config.detailsAlign === "right"
+                        ? "text-right"
+                        : "text-left"
+                  }`}
+                >
                   {d.value}
                 </span>
               </div>
@@ -373,7 +399,7 @@ const SingleTag: React.FC<{
         </div>
 
         {config.codeType !== "NENHUM" && (
-          <div 
+          <div
             className="flex flex-col items-center justify-end shrink-0 w-full pt-[1mm]"
             style={{ marginTop: `${config.codeMarginTop}mm` }}
           >
