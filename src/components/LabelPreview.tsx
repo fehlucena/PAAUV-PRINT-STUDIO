@@ -486,7 +486,7 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
     return (
       <div
         ref={ref}
-        className={`flex bg-white shadow-sm relative ${config.printRotate90 ? 'print-rotate' : ''}`}
+        className="flex bg-white shadow-sm relative"
         style={{ width: `${config.width}mm`, height: `${config.height}mm` }}
       >
         {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}
@@ -494,14 +494,10 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
           {`
           @media print {
             @page {
-              size: ${config.printRotate90 ? `${config.height}mm ${config.width}mm` : `${config.width}mm ${config.height}mm`};
+              size: ${config.width}mm ${config.height}mm;
               margin: 0;
             }
             body { margin: 0; padding: 0; background-color: white; }
-            .print-rotate {
-              transform: rotate(90deg) translateY(-100%);
-              transform-origin: top left;
-            }
           }
         `}
         </style>

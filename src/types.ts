@@ -38,7 +38,6 @@ export interface LabelConfig {
   height: number; // in mm
   columns: number; // 1 or 2
 
-  printRotate90: boolean;
   // Margins
   paddingTop: number;
   paddingBottom: number;
@@ -137,7 +136,6 @@ export const defaultConfig: LabelConfig = {
   width: 100,
   height: 75,
   columns: 2,
-  printRotate90: false,
   paddingTop: 4,
   paddingBottom: 2,
   paddingHorizontal: 3,
