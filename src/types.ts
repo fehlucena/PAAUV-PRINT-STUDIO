@@ -17,6 +17,19 @@ export type LabelPreset =
   | "custom";
 export type LabelType = "retail" | "logistics";
 
+export interface CustomElement {
+  id: string;
+  type: "text" | "rect";
+  x: number;
+  y: number;
+  width?: number;
+  height?: number;
+  content?: string;
+  fontSize?: number;
+  fontWeight?: string;
+  borderWidth?: number;
+}
+
 export interface LabelConfig {
   labelType: LabelType;
   // Layout & Dimension
@@ -66,12 +79,22 @@ export interface LabelConfig {
   detailsAlign: "left" | "center" | "right" | "between";
 
   // Logistics
+  showRemetente: boolean;
   remetente: string;
+  showDestinatario: boolean;
   destinatario: string;
+  destinatarioSize: number;
+  destinatarioMarginTop: number;
+  remetenteSize: number;
+  showInfoRow: boolean;
+  infoRowSize: number;
   pedido: string;
   peso: string;
   volumes: string;
   transportadora: string;
+  
+  // Custom Elements
+  customElements: CustomElement[];
 
   // Barcode / Optical
   codeType: CodeFormat;
@@ -141,12 +164,20 @@ export const defaultConfig: LabelConfig = {
   ],
   detailsSize: 11,
   detailsAlign: "between",
+  showRemetente: true,
   remetente: "PAAUV COMERCIO LTDA\\nRua das Flores, 123 - Centro\\nSão Paulo - SP / 01000-000",
+  remetenteSize: 8,
+  showDestinatario: true,
   destinatario: "JOÃO DA SILVA\\nAv. Paulista, 1000 - Apto 45\\nBela Vista, São Paulo - SP\\n01310-100",
+  destinatarioSize: 13,
+  destinatarioMarginTop: 1,
+  showInfoRow: true,
+  infoRowSize: 10,
   pedido: "PED-2026991",
   peso: "1.5 kg",
   volumes: "1/1",
   transportadora: "Correios - SEDEX",
+  customElements: [],
   codeType: "CODE128",
   codeValue: "HXW16X6U",
   codeMarginTop: 0,

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { LabelConfig, LabelDetail } from "../types";
+import React, { useState, useEffect } from "react";
+import { LabelConfig, LabelDetail, CustomElement } from "../types";
 import {
   ChevronDown,
   ChevronRight,
@@ -15,6 +15,9 @@ import {
   Type,
   Barcode as BarcodeIcon,
   Tag,
+  Save,
+  Star,
+  Edit2
 } from "lucide-react";
 
 interface SidebarProps {
@@ -31,7 +34,7 @@ const Switch = ({
 }) => {
   return (
     <div
-      className={`relative inline-block w-8 h-[18px] rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${checked ? "bg-blue-600" : "bg-slate-300"}`}
+      className={`relative inline-block w-8 h-[18px] rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${checked ? "bg-amber-600" : "bg-slate-300"}`}
       onClick={() => onChange(!checked)}
     >
       <div
@@ -45,6 +48,85 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   const [activeTab, setActiveTab] = useState<
     "layout" | "content" | "barcode" | "price"
   >("layout");
+  const [savedPresets, setSavedPresets] = useState<Record<string, LabelConfig>>({});
+  const [currentPresetName, setCurrentPresetName] = useState<string>("");
+  const [modalState, setModalState] = useState<{type: "save" | "rename" | "delete" | "alert" | null, message?: string}>({type: null});
+  const [modalInput, setModalInput] = useState("");
+
+  useEffect(() => {
+    const loaded = localStorage.getItem('paauv-presets');
+    if (loaded) {
+      try {
+        setSavedPresets(JSON.parse(loaded));
+      } catch (e) {}
+    }
+  }, []);
+
+  const handleSavePreset = () => {
+    setModalInput(currentPresetName);
+    setModalState({ type: "save" });
+  };
+
+  const executeSavePreset = (name: string) => {
+    if (name) {
+      const newPresets = { ...savedPresets, [name]: config };
+      setSavedPresets(newPresets);
+      localStorage.setItem('paauv-presets', JSON.stringify(newPresets));
+      setCurrentPresetName(name);
+    }
+    setModalState({ type: null });
+  };
+
+  const handleRenamePreset = () => {
+    if (!currentPresetName) return;
+    setModalInput(currentPresetName);
+    setModalState({ type: "rename" });
+  };
+
+  const executeRenamePreset = (newName: string) => {
+    if (newName && newName !== currentPresetName) {
+      const newPresets = { ...savedPresets };
+      newPresets[newName] = newPresets[currentPresetName];
+      delete newPresets[currentPresetName];
+      setSavedPresets(newPresets);
+      localStorage.setItem('paauv-presets', JSON.stringify(newPresets));
+      setCurrentPresetName(newName);
+    }
+    setModalState({ type: null });
+  };
+
+  const handleDeletePreset = () => {
+    if (!currentPresetName) return;
+    setModalState({ type: "delete" });
+  };
+
+  const executeDeletePreset = () => {
+    if (currentPresetName) {
+      const newPresets = { ...savedPresets };
+      delete newPresets[currentPresetName];
+      setSavedPresets(newPresets);
+      localStorage.setItem('paauv-presets', JSON.stringify(newPresets));
+      setCurrentPresetName("");
+    }
+    setModalState({ type: null });
+  };
+
+  const handleSetDefault = () => {
+    localStorage.setItem('paauv-default-preset', JSON.stringify(config));
+    setModalState({ type: "alert", message: "Configuração atual salva como o padrão ao abrir o aplicativo!" });
+  };
+
+  const handleLoadPreset = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const name = e.target.value;
+    if (name === "") {
+      setCurrentPresetName("");
+      return;
+    }
+    if (savedPresets[name]) {
+      setConfig(savedPresets[name]);
+      setCurrentPresetName(name);
+    }
+  };
 
   const updateConfig = (key: keyof LabelConfig, value: any) => {
     setConfig((prev) => ({ ...prev, [key]: value }));
@@ -153,31 +235,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   };
 
   return (
-    <div className="w-[380px] bg-white border-r border-slate-200 h-full flex flex-col shrink-0 print:hidden text-slate-800 font-sans">
+    <div className="w-[380px] bg-white border-r border-slate-200 h-full flex flex-col shrink-0 print:hidden text-slate-800 font-sans relative">
       {/* Tabs Header */}
       <div className="flex border-b border-slate-200 bg-slate-50 shrink-0 px-2 pt-2 gap-1 overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab("layout")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "layout" ? "border-blue-600 text-blue-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "layout" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
         >
           <LayoutTemplate size={14} /> Layout
         </button>
         <button
           onClick={() => setActiveTab("content")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "content" ? "border-blue-600 text-blue-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "content" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
         >
           <Type size={14} /> Conteúdo
         </button>
         <button
           onClick={() => setActiveTab("barcode")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "barcode" ? "border-blue-600 text-blue-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "barcode" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
         >
           <BarcodeIcon size={14} /> Código
         </button>
         {config.labelType === "retail" && (
           <button
             onClick={() => setActiveTab("price")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "price" ? "border-blue-600 text-blue-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "price" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
           >
             <Tag size={14} /> Preço
           </button>
@@ -202,7 +284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     updateConfig("height", 75);
                     updateConfig("columns", 2);
                   }}
-                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "retail" ? "bg-white shadow-sm text-blue-700 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
+                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "retail" ? "bg-white shadow-sm text-amber-700 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
                 >
                   Loja / Produto
                 </button>
@@ -215,7 +297,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     updateConfig("columns", 1);
                     if (activeTab === "price") setActiveTab("layout");
                   }}
-                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "logistics" ? "bg-white shadow-sm text-blue-700 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
+                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "logistics" ? "bg-white shadow-sm text-amber-700 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
                 >
                   Logística / Envio
                 </button>
@@ -227,7 +309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 Dimensões & Padrão
               </label>
               <select
-                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow"
+                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-shadow"
                 value={config.preset}
                 onChange={(e) => handlePresetChange(e.target.value)}
               >
@@ -258,7 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("width", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -271,7 +353,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("height", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="col-span-2 flex flex-col gap-1">
@@ -286,7 +368,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("columns", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -308,7 +390,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("paddingTop", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -322,7 +404,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("paddingHorizontal", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -336,7 +418,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("paddingBottom", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                   />
                 </div>
               </div>
@@ -347,7 +429,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 Tipografia Global
               </label>
               <select
-                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-shadow"
+                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-shadow"
                 value={config.fontFamily}
                 onChange={(e) => updateConfig("fontFamily", e.target.value)}
               >
@@ -390,7 +472,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     <input
                       type="file"
                       accept="image/*"
-                      className="text-[11px] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 cursor-pointer w-full"
+                      className="text-[11px] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200 cursor-pointer w-full"
                       onChange={handleLogoUpload}
                     />
                     <div className="flex items-center gap-2.5">
@@ -405,7 +487,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("logoSize", Number(e.target.value))
                         }
-                        className="flex-grow accent-blue-600"
+                        className="flex-grow accent-amber-600"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                         {config.logoSize}mm
@@ -440,7 +522,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       value={config.marca}
                       onChange={(e) => updateConfig("marca", e.target.value)}
                       placeholder="Nome da Marca"
-                      className="bg-white border border-slate-300 text-slate-800 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-blue-500"
+                      className="bg-white border border-slate-300 text-slate-800 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-amber-500"
                     />
 
                     <div className="flex items-center justify-between">
@@ -496,7 +578,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("sizeMarca", Number(e.target.value))
                         }
-                        className="flex-grow accent-blue-600"
+                        className="flex-grow accent-amber-600"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                         {config.sizeMarca}px
@@ -513,7 +595,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("headerLayout", e.target.value)
                     }
-                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500"
+                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
                   >
                     <option value="logo-left">Logo à Esquerda da Marca</option>
                     <option value="logo-right">Logo à Direita da Marca</option>
@@ -536,7 +618,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("headerGap", Number(e.target.value))
                         }
-                        className="flex-grow accent-blue-600"
+                        className="flex-grow accent-amber-600"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                         {config.headerGap}mm
@@ -560,7 +642,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   type="text"
                   value={config.cat}
                   onChange={(e) => updateConfig("cat", e.target.value)}
-                  className="bg-white border border-slate-300 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-blue-500 mt-1"
+                  className="bg-white border border-slate-300 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-amber-500 mt-1"
                 />
               )}
             </div>
@@ -605,7 +687,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       type="text"
                       value={config.produto}
                       onChange={(e) => updateConfig("produto", e.target.value)}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500"
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
                     />
                     <div className="flex items-center gap-2.5 mt-1">
                       <span className="text-[10px] text-slate-500 uppercase font-bold min-w-[65px]">
@@ -619,7 +701,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("sizeProduto", Number(e.target.value))
                         }
-                        className="flex-grow accent-blue-600"
+                        className="flex-grow accent-amber-600"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-9 text-center">
                         {config.sizeProduto}px
@@ -639,7 +721,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("produtoMarginTop", Number(e.target.value))
                         }
-                        className="flex-grow accent-blue-600"
+                        className="flex-grow accent-amber-600"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-9 text-center">
                         {config.produtoMarginTop || 0}
@@ -654,7 +736,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       </label>
                       <button
                         onClick={addDetail}
-                        className="text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded flex items-center gap-1 hover:bg-blue-200 transition-colors"
+                        className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded flex items-center gap-1 hover:bg-amber-200 transition-colors"
                       >
                         <Plus size={12} /> Nova Linha
                       </button>
@@ -669,7 +751,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           max="16"
                           value={config.detailsSize}
                           onChange={(e) => updateConfig("detailsSize", Number(e.target.value))}
-                          className="flex-grow accent-blue-600 w-16"
+                          className="flex-grow accent-amber-600 w-16"
                         />
                         <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">{config.detailsSize}px</span>
                       </div>
@@ -677,7 +759,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       <select
                         value={config.detailsAlign}
                         onChange={(e) => updateConfig("detailsAlign", e.target.value)}
-                        className="bg-white border border-slate-300 text-slate-800 px-2 py-1 rounded text-[10px] outline-none focus:border-blue-500 w-1/2 ml-2"
+                        className="bg-white border border-slate-300 text-slate-800 px-2 py-1 rounded text-[10px] outline-none focus:border-amber-500 w-1/2 ml-2"
                       >
                         <option value="between">Espaçado (Esquerda/Direita)</option>
                         <option value="left">Alinhado à Esquerda</option>
@@ -697,7 +779,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           onChange={(e) =>
                             updateDetail(detail.id, "show", e.target.checked)
                           }
-                          className="accent-blue-600 w-3.5 h-3.5 cursor-pointer ml-1 shrink-0"
+                          className="accent-amber-600 w-3.5 h-3.5 cursor-pointer ml-1 shrink-0"
                         />
                         <input
                           type="text"
@@ -729,80 +811,302 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">
-                      Remetente
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={config.remetente}
-                      onChange={(e) =>
-                        updateConfig("remetente", e.target.value)
-                      }
-                      className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-blue-500"
-                    />
+                  <div className="flex flex-col gap-1 border border-slate-200 p-2 rounded-md bg-slate-50">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">
+                        Remetente
+                      </label>
+                      <button
+                        onClick={() => updateConfig("showRemetente", !config.showRemetente)}
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showRemetente ? 'bg-amber-500' : 'bg-slate-300'}`}
+                      >
+                        <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showRemetente ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+                    {config.showRemetente && (
+                      <>
+                        <textarea
+                          rows={3}
+                          value={config.remetente}
+                          onChange={(e) =>
+                            updateConfig("remetente", e.target.value)
+                          }
+                          className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                        />
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">Tam.</span>
+                          <input
+                            type="range" min="6" max="16"
+                            value={config.remetenteSize}
+                            onChange={(e) => updateConfig("remetenteSize", Number(e.target.value))}
+                            className="flex-grow accent-amber-600"
+                          />
+                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.remetenteSize}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">
-                      Destinatário
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={config.destinatario}
-                      onChange={(e) =>
-                        updateConfig("destinatario", e.target.value)
-                      }
-                      className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-blue-500"
-                    />
+                  <div className="flex flex-col gap-1 border border-slate-200 p-2 rounded-md bg-slate-50">
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] font-bold text-slate-500 uppercase">
+                        Destinatário
+                      </label>
+                      <button
+                        onClick={() => updateConfig("showDestinatario", !config.showDestinatario)}
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showDestinatario ? 'bg-amber-500' : 'bg-slate-300'}`}
+                      >
+                        <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showDestinatario ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </button>
+                    </div>
+                    {config.showDestinatario && (
+                      <>
+                        <textarea
+                          rows={4}
+                          value={config.destinatario}
+                          onChange={(e) =>
+                            updateConfig("destinatario", e.target.value)
+                          }
+                          className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                        />
+                        <div className="flex flex-col gap-1.5 mt-1 bg-white border border-slate-100 p-2 rounded">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">Tam.</span>
+                            <input
+                              type="range" min="8" max="24"
+                              value={config.destinatarioSize}
+                              onChange={(e) => updateConfig("destinatarioSize", Number(e.target.value))}
+                              className="flex-grow accent-amber-600"
+                            />
+                            <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.destinatarioSize}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">Espaç.</span>
+                            <input
+                              type="range" min="-5" max="15" step="0.5"
+                              value={config.destinatarioMarginTop}
+                              onChange={(e) => updateConfig("destinatarioMarginTop", Number(e.target.value))}
+                              className="flex-grow accent-amber-600"
+                            />
+                            <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.destinatarioMarginTop}</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex flex-col gap-1">
+                  
+                  <div className="flex flex-col gap-1 border border-slate-200 p-2 rounded-md bg-slate-50">
+                    <div className="flex items-center justify-between mb-1">
                       <label className="text-[10px] font-bold text-slate-500 uppercase">
-                        Pedido/NFe
+                        Informações (Pedido, Peso, etc)
                       </label>
-                      <input
-                        type="text"
-                        value={config.pedido}
-                        onChange={(e) => updateConfig("pedido", e.target.value)}
-                        className="bg-white border border-slate-300 px-2 py-1 rounded text-[11px] w-full outline-none focus:border-blue-500"
-                      />
+                      <button
+                        onClick={() => updateConfig("showInfoRow", !config.showInfoRow)}
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showInfoRow ? 'bg-amber-500' : 'bg-slate-300'}`}
+                      >
+                        <div className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showInfoRow ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      </button>
                     </div>
-                    <div className="flex flex-col gap-1">
+                    {config.showInfoRow && (
+                      <>
+                        <div className="grid grid-cols-2 gap-2 mt-1">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Pedido/NFe
+                            </label>
+                            <input
+                              type="text"
+                              value={config.pedido}
+                              onChange={(e) => updateConfig("pedido", e.target.value)}
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Peso
+                            </label>
+                            <input
+                              type="text"
+                              value={config.peso}
+                              onChange={(e) => updateConfig("peso", e.target.value)}
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Volumes
+                            </label>
+                            <input
+                              type="text"
+                              value={config.volumes}
+                              onChange={(e) => updateConfig("volumes", e.target.value)}
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">
+                              Transportadora
+                            </label>
+                            <input
+                              type="text"
+                              value={config.transportadora}
+                              onChange={(e) => updateConfig("transportadora", e.target.value)}
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[70px]">Tam. Infos</span>
+                          <input
+                            type="range" min="6" max="16"
+                            value={config.infoRowSize}
+                            onChange={(e) => updateConfig("infoRowSize", Number(e.target.value))}
+                            className="flex-grow accent-amber-600"
+                          />
+                          <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">{config.infoRowSize}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  
+                  {/* Elementos Livres */}
+                  <div className="flex flex-col gap-1 border border-slate-200 p-2 rounded-md bg-slate-50 mt-2">
+                    <div className="flex items-center justify-between mb-2">
                       <label className="text-[10px] font-bold text-slate-500 uppercase">
-                        Transportadora
+                        Elementos Livres
                       </label>
-                      <input
-                        type="text"
-                        value={config.transportadora}
-                        onChange={(e) =>
-                          updateConfig("transportadora", e.target.value)
-                        }
-                        className="bg-white border border-slate-300 px-2 py-1 rounded text-[11px] w-full outline-none focus:border-blue-500"
-                      />
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            const newEl: CustomElement = {
+                              id: Math.random().toString(36).substring(7),
+                              type: "text",
+                              x: 10, y: 10,
+                              content: "Novo Texto",
+                              fontSize: 12,
+                              fontWeight: "normal"
+                            };
+                            updateConfig("customElements", [...(config.customElements || []), newEl]);
+                          }}
+                          className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-semibold hover:bg-amber-50 shadow-sm"
+                        >
+                          + Texto
+                        </button>
+                        <button
+                          onClick={() => {
+                            const newEl: CustomElement = {
+                              id: Math.random().toString(36).substring(7),
+                              type: "rect",
+                              x: 10, y: 10,
+                              width: 30,
+                              height: 30,
+                              borderWidth: 1
+                            };
+                            updateConfig("customElements", [...(config.customElements || []), newEl]);
+                          }}
+                          className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 px-1.5 py-0.5 rounded text-[10px] font-semibold hover:bg-amber-50 shadow-sm"
+                        >
+                          + Retângulo
+                        </button>
+                      </div>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">
-                        Peso
-                      </label>
-                      <input
-                        type="text"
-                        value={config.peso}
-                        onChange={(e) => updateConfig("peso", e.target.value)}
-                        className="bg-white border border-slate-300 px-2 py-1 rounded text-[11px] w-full outline-none focus:border-blue-500"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">
-                        Volumes
-                      </label>
-                      <input
-                        type="text"
-                        value={config.volumes}
-                        onChange={(e) =>
-                          updateConfig("volumes", e.target.value)
-                        }
-                        className="bg-white border border-slate-300 px-2 py-1 rounded text-[11px] w-full outline-none focus:border-blue-500"
-                      />
+
+                    <div className="flex flex-col gap-2">
+                      {(config.customElements || []).map((el) => (
+                        <div key={el.id} className="flex flex-col gap-1 bg-white border border-slate-200 p-2 rounded relative">
+                          <button
+                            onClick={() => {
+                              updateConfig(
+                                "customElements",
+                                config.customElements.filter((c) => c.id !== el.id)
+                              );
+                            }}
+                            className="absolute top-1 right-1 text-slate-400 hover:text-red-500 p-0.5"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                          
+                          <div className="flex items-center gap-2 pr-6">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase min-w-[30px]">
+                              {el.type === "text" ? "Texto" : "Forma"}
+                            </span>
+                            {el.type === "text" && (
+                              <input
+                                type="text"
+                                value={el.content || ""}
+                                onChange={(e) => {
+                                  updateConfig(
+                                    "customElements",
+                                    config.customElements.map((c) => c.id === el.id ? { ...c, content: e.target.value } : c)
+                                  );
+                                }}
+                                className="bg-slate-50 border border-slate-300 px-1.5 py-0.5 rounded text-[10px] flex-grow outline-none focus:border-amber-500"
+                              />
+                            )}
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-1 mt-1">
+                            {el.type === "text" && (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] text-slate-500">Tam.</span>
+                                  <input
+                                    type="number"
+                                    value={el.fontSize || 12}
+                                    onChange={(e) => {
+                                      updateConfig(
+                                        "customElements",
+                                        config.customElements.map((c) => c.id === el.id ? { ...c, fontSize: Number(e.target.value) } : c)
+                                      );
+                                    }}
+                                    className="bg-slate-50 border border-slate-300 px-1 py-0.5 rounded text-[9px] w-full outline-none focus:border-amber-500"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] text-slate-500">Peso</span>
+                                  <select
+                                    value={el.fontWeight || "normal"}
+                                    onChange={(e) => {
+                                      updateConfig(
+                                        "customElements",
+                                        config.customElements.map((c) => c.id === el.id ? { ...c, fontWeight: e.target.value } : c)
+                                      );
+                                    }}
+                                    className="bg-slate-50 border border-slate-300 px-1 py-0.5 rounded text-[9px] w-full outline-none focus:border-amber-500"
+                                  >
+                                    <option value="normal">Normal</option>
+                                    <option value="bold">Negrito</option>
+                                    <option value="900">Black</option>
+                                  </select>
+                                </div>
+                              </>
+                            )}
+                            {el.type === "rect" && (
+                              <>
+                                <div className="flex items-center gap-1">
+                                  <span className="text-[9px] text-slate-500">Borda</span>
+                                  <input
+                                    type="number" min="0" step="0.5"
+                                    value={el.borderWidth ?? 1}
+                                    onChange={(e) => {
+                                      updateConfig(
+                                        "customElements",
+                                        config.customElements.map((c) => c.id === el.id ? { ...c, borderWidth: Number(e.target.value) } : c)
+                                      );
+                                    }}
+                                    className="bg-slate-50 border border-slate-300 px-1 py-0.5 rounded text-[9px] w-full outline-none focus:border-amber-500"
+                                  />
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!config.customElements || config.customElements.length === 0) && (
+                        <p className="text-[9px] text-slate-400 text-center italic py-2">
+                          Nenhum elemento livre. Adicione textos ou retângulos.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -821,7 +1125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               <select
                 value={config.codeType}
                 onChange={(e) => updateConfig("codeType", e.target.value)}
-                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500"
+                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
               >
                 <option value="CODE128">Code 128 (Alfanumérico Padrão)</option>
                 <option value="EAN13">
@@ -841,7 +1145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   </label>
                   <button
                     onClick={generateRandomBarcode}
-                    className="flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-800 font-bold bg-blue-50 px-2 py-1 rounded border border-blue-100 transition-colors"
+                    className="flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-800 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-100 transition-colors"
                   >
                     <Dices size={12} /> Gerar
                   </button>
@@ -850,7 +1154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   type="text"
                   value={config.codeValue}
                   onChange={(e) => updateConfig("codeValue", e.target.value)}
-                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500 font-mono uppercase"
+                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 font-mono uppercase"
                 />
               </div>
             )}
@@ -861,7 +1165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   <label className="text-[10px] font-bold text-slate-500 uppercase">
                     Posição Vertical do Bloco Inteiro (Cima/Baixo)
                   </label>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
                     {config.codeMarginTop || 0}
                   </span>
                 </div>
@@ -874,7 +1178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   onChange={(e) =>
                     updateConfig("codeMarginTop", Number(e.target.value))
                   }
-                  className="w-full accent-blue-600"
+                  className="w-full accent-amber-600"
                 />
               </div>
             )}
@@ -891,7 +1195,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     updateConfig("barcodeTextValue", e.target.value)
                   }
                   placeholder="Deixe vazio para mostrar o valor acima"
-                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-blue-500 font-mono"
+                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 font-mono"
                 />
               </div>
             )}
@@ -902,7 +1206,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   <label className="text-[10px] font-bold text-slate-500 uppercase">
                     Posição Vertical Apenas do Texto
                   </label>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
                     {config.barcodeTextSpacing}
                   </span>
                 </div>
@@ -915,7 +1219,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   onChange={(e) =>
                     updateConfig("barcodeTextSpacing", Number(e.target.value))
                   }
-                  className="w-full accent-blue-600"
+                  className="w-full accent-amber-600"
                 />
               </div>
             )}
@@ -926,7 +1230,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   <label className="text-[10px] font-bold text-slate-500 uppercase">
                     Tamanho do Texto (px)
                   </label>
-                  <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                  <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
                     {config.barcodeTextSize}
                   </span>
                 </div>
@@ -939,12 +1243,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   onChange={(e) =>
                     updateConfig("barcodeTextSize", Number(e.target.value))
                   }
-                  className="w-full accent-blue-600"
+                  className="w-full accent-amber-600"
                 />
               </div>
             )}
 
-            <div className="text-[11px] text-slate-600 bg-blue-50 p-3 rounded-md border border-blue-100 leading-relaxed mt-2">
+            <div className="text-[11px] text-slate-600 bg-amber-50 p-3 rounded-md border border-amber-100 leading-relaxed mt-2">
               <strong>Dica de Impressão:</strong> Para leitores ópticos em
               etiquetas térmicas, use fundo branco puro e ajuste a densidade da
               impressora se as barras ficarem borradas.
@@ -980,7 +1284,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("serrilha", Number(e.target.value))
                       }
-                      className="flex-grow accent-blue-600"
+                      className="flex-grow accent-amber-600"
                     />
                     <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                       {config.serrilha}mm
@@ -999,7 +1303,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("precoPrefix", e.target.value)
                       }
-                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500"
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
                     />
                   </div>
                   <div className="col-span-2 flex flex-col gap-1">
@@ -1010,7 +1314,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       type="text"
                       value={config.preco}
                       onChange={(e) => updateConfig("preco", e.target.value)}
-                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-blue-500 font-bold"
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500 font-bold"
                     />
                   </div>
                 </div>
@@ -1028,7 +1332,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("sizePreco", Number(e.target.value))
                       }
-                      className="flex-grow accent-blue-600"
+                      className="flex-grow accent-amber-600"
                     />
                     <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                       {config.sizePreco}px
@@ -1060,7 +1364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             updateConfig("promoText", e.target.value)
                           }
                           placeholder="Ex: OFERTA"
-                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-blue-500"
+                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-amber-500"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -1074,7 +1378,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             updateConfig("precoAntigo", e.target.value)
                           }
                           placeholder="Ex: De: R$ 50,00"
-                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-blue-500 font-medium"
+                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-amber-500 font-medium"
                         />
                       </div>
                     </div>
@@ -1084,7 +1388,129 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
             )}
           </div>
         )}
+
+        {/* Preset Section inside scrollable content */}
+        <div className="border border-slate-200 p-4 bg-slate-50 rounded-md mt-6 mb-2">
+          <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <Save size={14} /> Presets Salvos
+          </h3>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <select 
+                onChange={handleLoadPreset}
+                className="bg-white border border-slate-300 text-slate-700 px-2 py-1.5 rounded-md text-xs outline-none focus:border-amber-500 flex-1 shadow-sm font-medium"
+                value={currentPresetName || ""}
+              >
+                <option value="">Nenhum / Novo...</option>
+                {Object.keys(savedPresets).map(name => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 mt-1">
+              <button 
+                onClick={handleSavePreset}
+                className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
+              >
+                <Save size={12} /> {currentPresetName ? "Sobrescrever" : "Salvar Novo"}
+              </button>
+              <button 
+                onClick={handleSetDefault}
+                className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
+              >
+                <Star size={12} /> Padrão Inicial
+              </button>
+              {currentPresetName && (
+                <>
+                  <button 
+                    onClick={handleRenamePreset}
+                    className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <Edit2 size={12} /> Renomear
+                  </button>
+                  <button 
+                    onClick={handleDeletePreset}
+                    className="bg-white border border-red-300 text-red-600 hover:text-white p-1.5 rounded text-xs font-semibold hover:bg-red-500 transition-colors flex items-center justify-center gap-1 shadow-sm"
+                  >
+                    <Trash2 size={12} /> Excluir
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Preset Modal Overlays */}
+      {modalState.type && (
+        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-lg shadow-xl w-full p-4 flex flex-col gap-4">
+            {modalState.type === "save" && (
+              <>
+                <h4 className="text-sm font-bold text-slate-800">Salvar Preset</h4>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-slate-600">Nome do Preset:</label>
+                  <input
+                    type="text"
+                    value={modalInput}
+                    onChange={(e) => setModalInput(e.target.value)}
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                    placeholder="Ex: Minha Etiqueta"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex justify-end gap-2 mt-2">
+                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                  <button onClick={() => executeSavePreset(modalInput)} className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm">Salvar</button>
+                </div>
+              </>
+            )}
+
+            {modalState.type === "rename" && (
+              <>
+                <h4 className="text-sm font-bold text-slate-800">Renomear Preset</h4>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs text-slate-600">Novo Nome:</label>
+                  <input
+                    type="text"
+                    value={modalInput}
+                    onChange={(e) => setModalInput(e.target.value)}
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                    placeholder="Ex: Novo Nome"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex justify-end gap-2 mt-2">
+                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                  <button onClick={() => executeRenamePreset(modalInput)} className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm">Renomear</button>
+                </div>
+              </>
+            )}
+
+            {modalState.type === "delete" && (
+              <>
+                <h4 className="text-sm font-bold text-slate-800">Excluir Preset</h4>
+                <p className="text-xs text-slate-600">Tem certeza que deseja excluir o preset "{currentPresetName}"?</p>
+                <div className="flex justify-end gap-2 mt-2">
+                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded">Cancelar</button>
+                  <button onClick={() => executeDeletePreset()} className="px-3 py-1.5 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 rounded shadow-sm">Excluir</button>
+                </div>
+              </>
+            )}
+
+            {modalState.type === "alert" && (
+              <>
+                <h4 className="text-sm font-bold text-slate-800">Aviso</h4>
+                <p className="text-xs text-slate-600">{modalState.message}</p>
+                <div className="flex justify-end mt-2">
+                  <button onClick={() => setModalState({ type: null })} className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm">OK</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

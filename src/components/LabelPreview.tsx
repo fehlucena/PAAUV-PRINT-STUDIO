@@ -1,10 +1,12 @@
 import React, { forwardRef } from "react";
 import Barcode from "react-barcode";
 import QRCode from "react-qr-code";
-import { LabelConfig } from "../types";
+import { Rnd } from "react-rnd";
+import { LabelConfig, CustomElement } from "../types";
 
 interface LabelPreviewProps {
   config: LabelConfig;
+  updateConfig?: (key: keyof LabelConfig, value: any) => void;
 }
 
 const SafeBarcode = ({ value, format }: { value: string; format: string }) => {
@@ -49,11 +51,12 @@ const SingleTag: React.FC<{
   config: LabelConfig;
   isLast: boolean;
   colWidth: number;
-}> = ({ config, isLast, colWidth }) => {
+  updateConfig?: (key: keyof LabelConfig, value: any) => void;
+}> = ({ config, isLast, colWidth, updateConfig }) => {
   if (config.labelType === "logistics") {
     return (
       <div
-        className={`flex flex-col overflow-hidden text-black bg-white ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
+        className={`flex flex-col overflow-hidden text-black bg-white relative ${!isLast ? "border-r border-dashed border-slate-300" : ""}`}
         style={{
           width: `${colWidth}mm`,
           height: `${config.height}mm`,
@@ -70,15 +73,18 @@ const SingleTag: React.FC<{
           }}
         >
           {/* Top section: Remetente & Logo */}
-          <div className="flex justify-between items-start border-b-[1.5px] border-black pb-[2mm] mb-[2mm]">
-            <div className="flex flex-col w-[65%] pr-1">
-              <span className="text-[8px] font-extrabold uppercase mb-[1mm]">
-                Remetente
-              </span>
-              <span className="text-[10px] leading-tight whitespace-pre-wrap">
-                {config.remetente}
-              </span>
-            </div>
+          <div className="flex justify-between items-start pb-[2mm] mb-[2mm] relative">
+            {config.showRemetente && (
+              <div className="flex flex-col w-[65%] pr-1">
+                <span className="font-extrabold uppercase mb-[1mm]" style={{ fontSize: `${config.remetenteSize}px` }}>
+                  Remetente
+                </span>
+                <span className="leading-tight whitespace-pre-wrap" style={{ fontSize: `${config.remetenteSize}px` }}>
+                  {config.remetente}
+                </span>
+              </div>
+            )}
+            {(!config.showRemetente) && <div className="flex-grow" />}
             {config.showLogo && config.logoBase64 && (
               <img
                 src={config.logoBase64}
@@ -88,50 +94,111 @@ const SingleTag: React.FC<{
               />
             )}
           </div>
+          {(config.showRemetente || (config.showLogo && config.logoBase64)) && (
+            <div className="w-full border-b-[1.5px] border-black mb-[2mm]" />
+          )}
 
           {/* Destinatário */}
-          <div className="flex flex-col mb-[2mm] flex-grow">
-            <span className="text-[9px] font-extrabold uppercase mb-[1mm] bg-black text-white px-1.5 py-0.5 self-start rounded-sm tracking-widest">
-              Destinatário
-            </span>
-            <span className="text-[13px] font-bold leading-snug whitespace-pre-wrap mt-[1mm]">
-              {config.destinatario}
-            </span>
-          </div>
+          {config.showDestinatario && (
+            <div className="flex flex-col mb-[2mm] flex-grow">
+              <span className="font-extrabold uppercase mb-[1mm] bg-black text-white px-1.5 py-0.5 self-start rounded-sm tracking-widest" style={{ fontSize: `${config.destinatarioSize - 4}px` }}>
+                Destinatário
+              </span>
+              <span className="font-bold leading-snug whitespace-pre-wrap" style={{ fontSize: `${config.destinatarioSize}px`, marginTop: `${config.destinatarioMarginTop}mm` }}>
+                {config.destinatario}
+              </span>
+            </div>
+          )}
 
           {/* Info Row: Pedido, Transportadora, Peso, Volumes */}
-          <div className="grid grid-cols-2 gap-[2mm] mb-[2mm] border-t-[1.5px] border-b-[1.5px] border-black py-[2mm] shrink-0">
-            <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-black">
-                Transportadora
-              </span>
-              <span className="text-[10px] font-extrabold">
-                {config.transportadora}
-              </span>
+          {config.showInfoRow && (
+            <div className="grid grid-cols-2 gap-[2mm] mb-[2mm] border-t-[1.5px] border-b-[1.5px] border-black py-[2mm] shrink-0">
+              <div className="flex flex-col">
+                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
+                  Transportadora
+                </span>
+                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>
+                  {config.transportadora}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
+                  Pedido / NFe
+                </span>
+                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>
+                  {config.pedido}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
+                  Peso
+                </span>
+                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>{config.peso}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="uppercase font-semibold text-black" style={{ fontSize: `${config.infoRowSize - 2}px` }}>
+                  Volumes
+                </span>
+                <span className="font-extrabold" style={{ fontSize: `${config.infoRowSize}px` }}>
+                  {config.volumes}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-black">
-                Pedido / NFe
-              </span>
-              <span className="text-[10px] font-extrabold">
-                {config.pedido}
-              </span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-black">
-                Peso
-              </span>
-              <span className="text-[10px] font-extrabold">{config.peso}</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[8px] uppercase font-semibold text-black">
-                Volumes
-              </span>
-              <span className="text-[10px] font-extrabold">
-                {config.volumes}
-              </span>
-            </div>
-          </div>
+          )}
+
+          {/* Custom Elements rendering overlay */}
+          {(config.customElements || []).map((el) => {
+            const isText = el.type === "text";
+            
+            return (
+              <Rnd
+                key={el.id}
+                bounds="parent"
+                position={{ x: el.x, y: el.y }}
+                size={el.type === "rect" ? { width: el.width || 30, height: el.height || 30 } : undefined}
+                enableResizing={el.type === "rect"}
+                disableDragging={!updateConfig}
+                onDragStop={(e, d) => {
+                  if (updateConfig && config.customElements) {
+                    updateConfig(
+                      "customElements",
+                      config.customElements.map((c) => c.id === el.id ? { ...c, x: d.x, y: d.y } : c)
+                    );
+                  }
+                }}
+                onResizeStop={(e, direction, ref, delta, position) => {
+                  if (updateConfig && config.customElements && el.type === "rect") {
+                    updateConfig(
+                      "customElements",
+                      config.customElements.map((c) => c.id === el.id ? {
+                        ...c,
+                        width: ref.offsetWidth,
+                        height: ref.offsetHeight,
+                        ...position
+                      } : c)
+                    );
+                  }
+                }}
+                className={`absolute z-10 ${updateConfig ? "hover:outline hover:outline-1 hover:outline-blue-500 cursor-move" : ""}`}
+                style={{
+                  border: isText ? "none" : `${el.borderWidth ?? 1}px solid black`,
+                  backgroundColor: isText ? "transparent" : "transparent"
+                }}
+              >
+                {isText && (
+                  <div
+                    style={{
+                      fontSize: `${el.fontSize || 12}px`,
+                      fontWeight: el.fontWeight || "normal",
+                      whiteSpace: "nowrap"
+                    }}
+                  >
+                    {el.content}
+                  </div>
+                )}
+              </Rnd>
+            );
+          })}
 
           {/* Barcode */}
           {config.codeType !== "NENHUM" && (
@@ -387,13 +454,13 @@ const SingleTag: React.FC<{
 };
 
 export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
-  ({ config }, ref) => {
+  ({ config, updateConfig }, ref) => {
     const colWidth = config.width / config.columns;
 
     return (
       <div
         ref={ref}
-        className="flex bg-white shadow-sm"
+        className="flex bg-white shadow-sm relative"
         style={{ width: `${config.width}mm`, height: `${config.height}mm` }}
       >
         {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}
@@ -415,6 +482,7 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
             config={config}
             isLast={i === config.columns - 1}
             colWidth={colWidth}
+            updateConfig={updateConfig}
           />
         ))}
       </div>
