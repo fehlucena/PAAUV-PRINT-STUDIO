@@ -3,21 +3,20 @@ import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { LabelPreview } from "./components/LabelPreview";
 import { defaultConfig, LabelConfig } from "./types";
+import { loadDefaultPresetFromDB } from "./lib/presets";
 
 export default function App() {
   const [config, setConfig] = useState<LabelConfig>(defaultConfig);
   const [zoom, setZoom] = useState(1.2);
 
   useEffect(() => {
-    const defaultPreset = localStorage.getItem('paauv-default-preset');
-    if (defaultPreset) {
-      try {
-        const parsed = JSON.parse(defaultPreset);
-        if (parsed && typeof parsed.marca === 'string') {
-          setConfig(parsed);
-        }
-      } catch (e) {}
-    }
+    const fetchDefaultPreset = async () => {
+      const defaultPreset = await loadDefaultPresetFromDB();
+      if (defaultPreset && typeof defaultPreset.marca === 'string') {
+        setConfig(defaultPreset);
+      }
+    };
+    fetchDefaultPreset();
   }, []);
 
   const handlePrint = () => {

@@ -19,6 +19,7 @@ import {
   Star,
   Edit2,
 } from "lucide-react";
+import { loadPresetsFromDB, savePresetsToDB, saveDefaultPresetToDB } from "../lib/presets";
 
 interface SidebarProps {
   config: LabelConfig;
@@ -59,12 +60,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   const [modalInput, setModalInput] = useState("");
 
   useEffect(() => {
-    const loaded = localStorage.getItem("paauv-presets");
-    if (loaded) {
-      try {
-        setSavedPresets(JSON.parse(loaded));
-      } catch (e) {}
-    }
+    const fetchPresets = async () => {
+      const loaded = await loadPresetsFromDB();
+      if (loaded && Object.keys(loaded).length > 0) {
+        setSavedPresets(loaded);
+      }
+    };
+    fetchPresets();
   }, []);
 
   const handleSavePreset = () => {
@@ -72,11 +74,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
     setModalState({ type: "save" });
   };
 
-  const executeSavePreset = (name: string) => {
+  const executeSavePreset = async (name: string) => {
     if (name) {
       const newPresets = { ...savedPresets, [name]: config };
       setSavedPresets(newPresets);
-      localStorage.setItem("paauv-presets", JSON.stringify(newPresets));
+      await savePresetsToDB(newPresets);
       setCurrentPresetName(name);
     }
     setModalState({ type: null });
@@ -88,13 +90,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
     setModalState({ type: "rename" });
   };
 
-  const executeRenamePreset = (newName: string) => {
+  const executeRenamePreset = async (newName: string) => {
     if (newName && newName !== currentPresetName) {
       const newPresets = { ...savedPresets };
       newPresets[newName] = newPresets[currentPresetName];
       delete newPresets[currentPresetName];
       setSavedPresets(newPresets);
-      localStorage.setItem("paauv-presets", JSON.stringify(newPresets));
+      await savePresetsToDB(newPresets);
       setCurrentPresetName(newName);
     }
     setModalState({ type: null });
@@ -105,19 +107,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
     setModalState({ type: "delete" });
   };
 
-  const executeDeletePreset = () => {
+  const executeDeletePreset = async () => {
     if (currentPresetName) {
       const newPresets = { ...savedPresets };
       delete newPresets[currentPresetName];
       setSavedPresets(newPresets);
-      localStorage.setItem("paauv-presets", JSON.stringify(newPresets));
+      await savePresetsToDB(newPresets);
       setCurrentPresetName("");
     }
     setModalState({ type: null });
   };
 
-  const handleSetDefault = () => {
-    localStorage.setItem("paauv-default-preset", JSON.stringify(config));
+  const handleSetDefault = async () => {
+    await saveDefaultPresetToDB(config);
     setModalState({
       type: "alert",
       message: "Configuração atual salva como o padrão ao abrir o aplicativo!",
