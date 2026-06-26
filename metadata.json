@@ -1,8 +1,0 @@
-{
-  "name": "Remix: Remix: Guia de triagem",
-  "description": "guia de triagem e precificacao do PAUUV -",
-  "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
-}
