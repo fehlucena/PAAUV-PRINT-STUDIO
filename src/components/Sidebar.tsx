@@ -64,9 +64,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   useEffect(() => {
     const fetchPresets = async () => {
       if (!user) return;
-      const loaded = await loadPresetsFromDB(user.uid);
-      if (loaded && Object.keys(loaded).length > 0) {
-        setSavedPresets(loaded);
+      try {
+        const loaded = await loadPresetsFromDB(user.uid);
+        if (loaded && Object.keys(loaded).length > 0) {
+          setSavedPresets(loaded);
+        }
+      } catch (err: any) {
+        console.error("Erro ao carregar presets:", err.message);
       }
     };
     fetchPresets();

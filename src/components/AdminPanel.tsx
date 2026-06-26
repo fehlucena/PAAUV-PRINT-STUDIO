@@ -6,6 +6,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../lib/AuthContext";
 import firebaseConfig from "../../firebase-applet-config.json";
 import { UserPlus, Trash2, ArrowLeft, Shield } from "lucide-react";
+import { handleFirestoreError, OperationType } from "../lib/firestoreUtils";
 
 // Initialize a secondary app just for creating users so it doesn't log the admin out
 const secondaryApp = initializeApp(firebaseConfig, "Secondary");
@@ -20,6 +21,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
   const [success, setSuccess] = useState("");
 
   const loadUsers = async () => {
+    const path = "users";
     try {
       const querySnapshot = await getDocs(collection(db, "users"));
       const userList: any[] = [];
@@ -27,8 +29,13 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
         userList.push(doc.data());
       });
       setUsers(userList);
-    } catch (err) {
-      console.error("Error loading users:", err);
+    } catch (err: any) {
+      try {
+        handleFirestoreError(err, OperationType.GET, path);
+      } catch (jsonErr: any) {
+        const info = JSON.parse(jsonErr.message);
+        setError(`Erro de permissão: Você não tem acesso a esta lista. (UID: ${info.authInfo.userId})`);
+      }
     }
   };
 
@@ -61,7 +68,12 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
       };
 
       // Save user to Firestore
-      await setDoc(doc(db, "users", newUser.uid), newUser);
+      const path = `users/${newUser.uid}`;
+      try {
+        await setDoc(doc(db, "users", newUser.uid), newUser);
+      } catch (err) {
+        handleFirestoreError(err, OperationType.WRITE, path);
+      }
       
       setSuccess(`Usuário ${newUsername} criado com sucesso!`);
       setNewUsername("");
@@ -82,11 +94,12 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
 
   const handleDeleteUser = async (uid: string) => {
     if (window.confirm("Tem certeza que deseja excluir este usuário? Isso não remove a conta do Auth, apenas do painel e revoga acesso.")) {
+      const path = `users/${uid}`;
       try {
         await deleteDoc(doc(db, "users", uid));
         loadUsers();
       } catch (err) {
-        console.error("Error deleting user:", err);
+        handleFirestoreError(err, OperationType.DELETE, path);
       }
     }
   };

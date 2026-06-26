@@ -7,27 +7,47 @@ export function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoggingIn(true);
+    console.log("Tentando login para:", username);
     try {
       // Simulate username login using a dummy domain
       await signInWithEmailAndPassword(auth, `${username}@paauv.local`, password);
+      console.log("Login bem sucedido via Firebase Auth");
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro no login:", err.code, err.message);
       
       // Auto-create 'admin' account if it's the very first time trying to login
-      if (username.toLowerCase() === 'admin' && password.length >= 6) {
+      if (username.toLowerCase() === 'admin' && password.length >= 6 && err.code === 'auth/user-not-found') {
         try {
+          console.log("Usuário admin não encontrado, tentando criar...");
           await createUserWithEmailAndPassword(auth, 'admin@paauv.local', password);
-          return; // Success! It will auto-login.
+          console.log("Admin criado com sucesso!");
+          return; // Success! It will auto-login via onAuthStateChanged
         } catch (createErr) {
           console.error("Could not create initial admin:", createErr);
         }
       }
 
-      setError("Usuário ou senha incorretos.");
+      if (err.code === 'auth/wrong-password') {
+        setError("Senha incorreta.");
+      } else if (err.code === 'auth/user-not-found') {
+        setError("Usuário não encontrado.");
+      } else if (err.code === 'auth/invalid-email') {
+        setError("Formato de usuário inválido.");
+      } else if (err.code === 'auth/network-request-failed') {
+        setError("Erro de rede. Verifique sua conexão.");
+      } else if (err.code === 'auth/too-many-requests') {
+        setError("Muitas tentativas. Tente novamente mais tarde.");
+      } else {
+        setError(`Erro: ${err.message || "Falha ao entrar"}`);
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -54,9 +74,10 @@ export function Login() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-900 focus:border-rose-900 outline-none transition-all"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-900 focus:border-rose-900 outline-none transition-all disabled:opacity-50"
               placeholder="Digite seu usuário"
               required
+              disabled={isLoggingIn}
             />
           </div>
           <div>
@@ -67,20 +88,25 @@ export function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-900 focus:border-rose-900 outline-none transition-all"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-900 focus:border-rose-900 outline-none transition-all disabled:opacity-50"
               placeholder="Digite sua senha"
               required
+              disabled={isLoggingIn}
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-rose-900 text-white py-2.5 rounded-lg font-medium hover:bg-rose-950 transition-colors mt-2"
+            disabled={isLoggingIn}
+            className="w-full bg-rose-900 text-white py-2.5 rounded-lg font-medium hover:bg-rose-950 transition-colors mt-2 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            Entrar
+            {isLoggingIn ? "Entrando..." : "Entrar"}
           </button>
         </form>
         <p className="text-xs text-center text-slate-400 mt-6">
           Primeiro acesso? Faça login como <strong>admin</strong> e escolha uma senha.
+        </p>
+        <p className="text-[10px] text-center text-slate-300 mt-2">
+          v1.0.3 - {new Date().toLocaleTimeString()}
         </p>
       </div>
     </div>
