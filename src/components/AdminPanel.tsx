@@ -104,7 +104,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
               <ArrowLeft size={20} className="text-slate-700" />
             </button>
             <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-              <Shield className="text-amber-600" />
+              <Shield className="text-rose-900" />
               Gestão de Usuários
             </h1>
           </div>
@@ -128,7 +128,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
                   type="text"
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-rose-900"
                   placeholder="Apenas letras e números"
                   required
                 />
@@ -139,7 +139,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-amber-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-rose-900"
                   placeholder="Mínimo 6 caracteres"
                   required
                   minLength={6}
@@ -150,7 +150,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as "admin" | "user")}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-amber-500 bg-white"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-rose-900 bg-white"
                 >
                   <option value="user">Usuário Padrão</option>
                   <option value="admin">Administrador</option>
@@ -180,7 +180,7 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
                   <tr key={u.uid} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="py-3 px-4 text-slate-800 font-medium">{u.username}</td>
                     <td className="py-3 px-4">
-                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${u.role === 'admin' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'}`}>
+                      <span className={`text-xs px-2 py-1 rounded-full font-medium ${u.role === 'admin' ? 'bg-rose-100 text-rose-900' : 'bg-blue-100 text-blue-800'}`}>
                         {u.role === 'admin' ? 'Admin' : 'Usuário'}
                       </span>
                     </td>

@@ -39,7 +39,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="h-screen w-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="animate-spin text-amber-600" size={48} />
+        <Loader2 className="animate-spin text-rose-900" size={48} />
       </div>
     );
   }

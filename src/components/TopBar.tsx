@@ -50,7 +50,7 @@ export const TopBar: React.FC<TopBarProps> = ({ zoom, setZoom, config, setConfig
   return (
     <div className="h-[60px] bg-white border-b border-slate-200 flex justify-between items-center px-6 shrink-0 z-10 print:hidden text-slate-800 font-sans shadow-sm">
       <div className="font-extrabold tracking-tight flex items-center gap-4 text-lg">
-        <span className="text-amber-600">PAAUV</span> Print Studio
+        <span className="text-rose-900">PAAUV</span> Print Studio
       </div>
       
       <div className="flex items-center gap-4">
@@ -71,11 +71,11 @@ export const TopBar: React.FC<TopBarProps> = ({ zoom, setZoom, config, setConfig
         </div>
         
         <div className="flex items-center gap-2 border-r border-slate-200 pr-4">
-          <label className="text-slate-600 hover:text-amber-600 p-2 rounded-md transition-colors cursor-pointer" title="Importar">
+          <label className="text-slate-600 hover:text-rose-900 p-2 rounded-md transition-colors cursor-pointer" title="Importar">
             <Upload size={18} />
             <input type="file" ref={fileInputRef} accept=".json" className="hidden" onChange={handleImport} />
           </label>
-          <button onClick={handleExport} className="text-slate-600 hover:text-amber-600 p-2 rounded-md transition-colors" title="Exportar">
+          <button onClick={handleExport} className="text-slate-600 hover:text-rose-900 p-2 rounded-md transition-colors" title="Exportar">
             <Download size={18} />
           </button>
         </div>
@@ -84,7 +84,7 @@ export const TopBar: React.FC<TopBarProps> = ({ zoom, setZoom, config, setConfig
           {user?.role === "admin" && (
             <button
               onClick={onOpenAdmin}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-md transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-3 py-1.5 rounded-md transition-colors"
             >
               <Shield size={14} />
               Gestão
@@ -105,7 +105,7 @@ export const TopBar: React.FC<TopBarProps> = ({ zoom, setZoom, config, setConfig
           
           <button 
             onClick={onPrint}
-            className="bg-amber-600 border border-amber-600 font-bold text-white px-5 py-2 rounded-md text-xs cursor-pointer hover:bg-amber-700 transition-colors flex items-center gap-1.5 shadow-sm ml-2"
+            className="bg-rose-900 border border-rose-900 font-bold text-white px-5 py-2 rounded-md text-xs cursor-pointer hover:bg-rose-950 transition-colors flex items-center gap-1.5 shadow-sm ml-2"
           >
             <Printer size={16} />
             Imprimir

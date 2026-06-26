@@ -34,7 +34,7 @@ export function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <div className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm border border-slate-100">
-        <div className="flex justify-center mb-6 text-amber-600">
+        <div className="flex justify-center mb-6 text-rose-900">
           <LogIn size={48} />
         </div>
         <h2 className="text-2xl font-bold text-center text-slate-800 mb-6">Login</h2>
@@ -54,7 +54,7 @@ export function Login() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-900 focus:border-rose-900 outline-none transition-all"
               placeholder="Digite seu usuário"
               required
             />
@@ -67,14 +67,14 @@ export function Login() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all"
+              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-rose-900 focus:border-rose-900 outline-none transition-all"
               placeholder="Digite sua senha"
               required
             />
           </div>
           <button
             type="submit"
-            className="w-full bg-amber-600 text-white py-2.5 rounded-lg font-medium hover:bg-amber-700 transition-colors mt-2"
+            className="w-full bg-rose-900 text-white py-2.5 rounded-lg font-medium hover:bg-rose-950 transition-colors mt-2"
           >
             Entrar
           </button>

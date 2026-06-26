@@ -36,7 +36,7 @@ const Switch = ({
 }) => {
   return (
     <div
-      className={`relative inline-block w-8 h-[18px] rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${checked ? "bg-amber-600" : "bg-slate-300"}`}
+      className={`relative inline-block w-8 h-[18px] rounded-full cursor-pointer transition-colors duration-200 ease-in-out ${checked ? "bg-rose-900" : "bg-slate-300"}`}
       onClick={() => onChange(!checked)}
     >
       <div
@@ -254,26 +254,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
       <div className="flex border-b border-slate-200 bg-slate-50 shrink-0 px-2 pt-2 gap-1 overflow-x-auto custom-scrollbar">
         <button
           onClick={() => setActiveTab("layout")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "layout" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "layout" ? "border-rose-900 text-rose-950 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
         >
           <LayoutTemplate size={14} /> Layout
         </button>
         <button
           onClick={() => setActiveTab("content")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "content" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "content" ? "border-rose-900 text-rose-950 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
         >
           <Type size={14} /> Conteúdo
         </button>
         <button
           onClick={() => setActiveTab("barcode")}
-          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "barcode" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+          className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "barcode" ? "border-rose-900 text-rose-950 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
         >
           <BarcodeIcon size={14} /> Código
         </button>
         {config.labelType === "retail" && (
           <button
             onClick={() => setActiveTab("price")}
-            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "price" ? "border-amber-600 text-amber-700 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
+            className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "price" ? "border-rose-900 text-rose-950 bg-white rounded-t-md" : "border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-t-md"}`}
           >
             <Tag size={14} /> Preço
           </button>
@@ -298,7 +298,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     updateConfig("height", 75);
                     updateConfig("columns", 2);
                   }}
-                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "retail" ? "bg-white shadow-sm text-amber-700 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
+                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "retail" ? "bg-white shadow-sm text-rose-900 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
                 >
                   Loja / Produto
                 </button>
@@ -311,7 +311,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     updateConfig("columns", 1);
                     if (activeTab === "price") setActiveTab("layout");
                   }}
-                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "logistics" ? "bg-white shadow-sm text-amber-700 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
+                  className={`flex-1 py-1.5 text-[11px] font-bold rounded transition-colors ${config.labelType === "logistics" ? "bg-white shadow-sm text-rose-900 border border-slate-200" : "text-slate-500 hover:bg-slate-200"}`}
                 >
                   Logística / Envio
                 </button>
@@ -323,7 +323,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 Dimensões & Padrão
               </label>
               <select
-                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-shadow"
+                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900 focus:ring-1 focus:ring-rose-900 transition-shadow"
                 value={config.preset}
                 onChange={(e) => handlePresetChange(e.target.value)}
               >
@@ -354,7 +354,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("width", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -367,7 +367,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("height", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                   />
                 </div>
                 <div className="col-span-2 flex flex-col gap-1">
@@ -382,7 +382,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("columns", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                   />
                 </div>
               </div>
@@ -404,7 +404,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("paddingTop", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -418,7 +418,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("paddingHorizontal", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -432,7 +432,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("paddingBottom", Number(e.target.value))
                     }
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                   />
                 </div>
               </div>
@@ -443,7 +443,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 Tipografia Global
               </label>
               <select
-                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-shadow"
+                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900 focus:ring-1 focus:ring-rose-900 transition-shadow"
                 value={config.fontFamily}
                 onChange={(e) => updateConfig("fontFamily", e.target.value)}
               >
@@ -486,7 +486,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     <input
                       type="file"
                       accept="image/*"
-                      className="text-[11px] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-700 hover:file:bg-amber-200 cursor-pointer w-full"
+                      className="text-[11px] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-rose-100 file:text-rose-900 hover:file:bg-rose-200 cursor-pointer w-full"
                       onChange={handleLogoUpload}
                     />
                     <div className="flex items-center gap-2.5">
@@ -501,7 +501,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("logoSize", Number(e.target.value))
                         }
-                        className="flex-grow accent-amber-600"
+                        className="flex-grow accent-rose-900"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                         {config.logoSize}mm
@@ -536,7 +536,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       value={config.marca}
                       onChange={(e) => updateConfig("marca", e.target.value)}
                       placeholder="Nome da Marca"
-                      className="bg-white border border-slate-300 text-slate-800 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                      className="bg-white border border-slate-300 text-slate-800 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-rose-900"
                     />
 
                     <div className="flex items-center justify-between">
@@ -592,7 +592,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("sizeMarca", Number(e.target.value))
                         }
-                        className="flex-grow accent-amber-600"
+                        className="flex-grow accent-rose-900"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                         {config.sizeMarca}px
@@ -609,7 +609,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("headerLayout", e.target.value)
                     }
-                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
                   >
                     <option value="logo-left">Logo à Esquerda da Marca</option>
                     <option value="logo-right">Logo à Direita da Marca</option>
@@ -632,7 +632,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("headerGap", Number(e.target.value))
                         }
-                        className="flex-grow accent-amber-600"
+                        className="flex-grow accent-rose-900"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                         {config.headerGap}mm
@@ -655,7 +655,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   onChange={(e) =>
                     updateConfig("bodyMarginTop", Number(e.target.value))
                   }
-                  className="flex-grow accent-amber-600"
+                  className="flex-grow accent-rose-900"
                 />
                 <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-10 text-center">
                   {config.bodyMarginTop}mm
@@ -678,7 +678,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       type="text"
                       value={config.cat}
                       onChange={(e) => updateConfig("cat", e.target.value)}
-                      className="bg-white border border-slate-300 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-amber-500 mt-1"
+                      className="bg-white border border-slate-300 px-3 py-1.5 rounded-md text-xs w-full outline-none focus:border-rose-900 mt-1"
                     />
                   )}
                 </>
@@ -702,7 +702,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       updateConfig("conteudoText", e.target.value)
                     }
                     placeholder="Adicione texto livre aqui..."
-                    className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                   />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1 bg-white border border-slate-300 rounded p-0.5">
@@ -738,7 +738,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("conteudoSize", Number(e.target.value))
                       }
-                      className="flex-grow accent-amber-600"
+                      className="flex-grow accent-rose-900"
                     />
                     <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-10 text-center">
                       {config.conteudoSize}px
@@ -760,7 +760,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           Number(e.target.value),
                         )
                       }
-                      className="flex-grow accent-amber-600"
+                      className="flex-grow accent-rose-900"
                     />
                     <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-10 text-center">
                       {config.conteudoMarginTop}mm
@@ -810,7 +810,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       type="text"
                       value={config.produto}
                       onChange={(e) => updateConfig("produto", e.target.value)}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
                     />
                     <div className="flex items-center gap-2.5 mt-1">
                       <span className="text-[10px] text-slate-500 uppercase font-bold min-w-[65px]">
@@ -824,7 +824,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("sizeProduto", Number(e.target.value))
                         }
-                        className="flex-grow accent-amber-600"
+                        className="flex-grow accent-rose-900"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-9 text-center">
                         {config.sizeProduto}px
@@ -847,7 +847,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             Number(e.target.value),
                           )
                         }
-                        className="flex-grow accent-amber-600"
+                        className="flex-grow accent-rose-900"
                       />
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono w-9 text-center">
                         {config.produtoMarginTop || 0}
@@ -862,7 +862,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       </label>
                       <button
                         onClick={addDetail}
-                        className="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-1 rounded flex items-center gap-1 hover:bg-amber-200 transition-colors"
+                        className="text-[10px] font-bold bg-rose-50 text-rose-900 px-2 py-1 rounded flex items-center gap-1 hover:bg-rose-100 transition-colors"
                       >
                         <Plus size={12} /> Nova Linha
                       </button>
@@ -881,7 +881,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           onChange={(e) =>
                             updateConfig("detailsSize", Number(e.target.value))
                           }
-                          className="flex-grow accent-amber-600 w-16"
+                          className="flex-grow accent-rose-900 w-16"
                         />
                         <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                           {config.detailsSize}px
@@ -893,7 +893,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onChange={(e) =>
                           updateConfig("detailsAlign", e.target.value)
                         }
-                        className="bg-white border border-slate-300 text-slate-800 px-2 py-1 rounded text-[10px] outline-none focus:border-amber-500 w-1/2 ml-2"
+                        className="bg-white border border-slate-300 text-slate-800 px-2 py-1 rounded text-[10px] outline-none focus:border-rose-900 w-1/2 ml-2"
                       >
                         <option value="between">
                           Espaçado (Esquerda/Direita)
@@ -915,7 +915,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           onChange={(e) =>
                             updateDetail(detail.id, "show", e.target.checked)
                           }
-                          className="accent-amber-600 w-3.5 h-3.5 cursor-pointer ml-1 shrink-0"
+                          className="accent-rose-900 w-3.5 h-3.5 cursor-pointer ml-1 shrink-0"
                         />
                         <input
                           type="text"
@@ -956,7 +956,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onClick={() =>
                           updateConfig("showRemetente", !config.showRemetente)
                         }
-                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showRemetente ? "bg-amber-500" : "bg-slate-300"}`}
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showRemetente ? "bg-rose-900" : "bg-slate-300"}`}
                       >
                         <div
                           className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showRemetente ? "translate-x-4" : "translate-x-0.5"}`}
@@ -971,7 +971,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           onChange={(e) =>
                             updateConfig("remetente", e.target.value)
                           }
-                          className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                          className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                         />
                         <div className="flex items-center gap-2 mt-1">
                           <span className="text-[9px] text-slate-500 uppercase font-bold min-w-[50px]">
@@ -988,7 +988,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                                 Number(e.target.value),
                               )
                             }
-                            className="flex-grow accent-amber-600"
+                            className="flex-grow accent-rose-900"
                           />
                           <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
                             {config.remetenteSize}
@@ -1009,7 +1009,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             !config.showDestinatario,
                           )
                         }
-                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showDestinatario ? "bg-amber-500" : "bg-slate-300"}`}
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showDestinatario ? "bg-rose-900" : "bg-slate-300"}`}
                       >
                         <div
                           className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showDestinatario ? "translate-x-4" : "translate-x-0.5"}`}
@@ -1024,7 +1024,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                           onChange={(e) =>
                             updateConfig("destinatario", e.target.value)
                           }
-                          className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                          className="bg-white border border-slate-300 text-slate-800 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                         />
                         <div className="flex flex-col gap-1.5 mt-1 bg-white border border-slate-100 p-2 rounded">
                           <div className="flex items-center gap-2">
@@ -1042,7 +1042,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                                   Number(e.target.value),
                                 )
                               }
-                              className="flex-grow accent-amber-600"
+                              className="flex-grow accent-rose-900"
                             />
                             <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
                               {config.destinatarioSize}
@@ -1065,7 +1065,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                                   Number(e.target.value),
                                 )
                               }
-                              className="flex-grow accent-amber-600"
+                              className="flex-grow accent-rose-900"
                             />
                             <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
                               {config.destinatarioMarginTop}
@@ -1085,7 +1085,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                         onClick={() =>
                           updateConfig("showInfoRow", !config.showInfoRow)
                         }
-                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showInfoRow ? "bg-amber-500" : "bg-slate-300"}`}
+                        className={`w-8 h-4 rounded-full transition-colors relative ${config.showInfoRow ? "bg-rose-900" : "bg-slate-300"}`}
                       >
                         <div
                           className={`w-3 h-3 bg-white rounded-full absolute top-0.5 transition-transform ${config.showInfoRow ? "translate-x-4" : "translate-x-0.5"}`}
@@ -1105,7 +1105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                               onChange={(e) =>
                                 updateConfig("pedido", e.target.value)
                               }
-                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                             />
                           </div>
                           <div className="flex flex-col gap-1">
@@ -1118,7 +1118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                               onChange={(e) =>
                                 updateConfig("peso", e.target.value)
                               }
-                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                             />
                           </div>
                           <div className="flex flex-col gap-1">
@@ -1131,7 +1131,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                               onChange={(e) =>
                                 updateConfig("volumes", e.target.value)
                               }
-                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                             />
                           </div>
                           <div className="flex flex-col gap-1">
@@ -1144,7 +1144,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                               onChange={(e) =>
                                 updateConfig("transportadora", e.target.value)
                               }
-                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-amber-500"
+                              className="bg-white border border-slate-300 px-2 py-1.5 rounded-md text-[11px] w-full outline-none focus:border-rose-900"
                             />
                           </div>
                         </div>
@@ -1164,7 +1164,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                                 Number(e.target.value),
                               )
                             }
-                            className="flex-grow accent-amber-600"
+                            className="flex-grow accent-rose-900"
                           />
                           <span className="text-[9px] bg-slate-200 text-slate-700 px-1 rounded font-mono w-6 text-center">
                             {config.infoRowSize}
@@ -1189,7 +1189,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
               <select
                 value={config.codeType}
                 onChange={(e) => updateConfig("codeType", e.target.value)}
-                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
               >
                 <option value="CODE128">Code 128 (Alfanumérico Padrão)</option>
                 <option value="EAN13">
@@ -1209,7 +1209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   </label>
                   <button
                     onClick={generateRandomBarcode}
-                    className="flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-800 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-100 transition-colors"
+                    className="flex items-center gap-1 text-[10px] text-rose-900 hover:text-rose-950 font-bold bg-rose-50 px-2 py-1 rounded border border-rose-100 transition-colors"
                   >
                     <Dices size={12} /> Gerar
                   </button>
@@ -1218,7 +1218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   type="text"
                   value={config.codeValue}
                   onChange={(e) => updateConfig("codeValue", e.target.value)}
-                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 font-mono uppercase"
+                  className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900 font-mono uppercase"
                 />
               </div>
             )}
@@ -1259,7 +1259,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     <label className="text-[10px] font-bold text-slate-500 uppercase">
                       Posição Vertical do Bloco Inteiro (Cima/Baixo)
                     </label>
-                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-rose-900 bg-rose-50 px-1.5 py-0.5 rounded">
                       {config.codeMarginTop || 0}
                     </span>
                   </div>
@@ -1272,7 +1272,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("codeMarginTop", Number(e.target.value))
                     }
-                    className="w-full accent-amber-600"
+                    className="w-full accent-rose-900"
                   />
                 </div>
 
@@ -1287,7 +1287,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       updateConfig("barcodeTextValue", e.target.value)
                     }
                     placeholder="Deixe vazio para mostrar o valor acima"
-                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500 font-mono"
+                    className="bg-white border border-slate-300 text-slate-800 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900 font-mono"
                   />
                 </div>
 
@@ -1296,7 +1296,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     <label className="text-[10px] font-bold text-slate-500 uppercase">
                       Posição Vertical Apenas do Texto
                     </label>
-                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-rose-900 bg-rose-50 px-1.5 py-0.5 rounded">
                       {config.barcodeTextSpacing}
                     </span>
                   </div>
@@ -1309,7 +1309,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("barcodeTextSpacing", Number(e.target.value))
                     }
-                    className="w-full accent-amber-600"
+                    className="w-full accent-rose-900"
                   />
                 </div>
 
@@ -1318,7 +1318,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     <label className="text-[10px] font-bold text-slate-500 uppercase">
                       Tamanho do Texto (px)
                     </label>
-                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-bold text-rose-900 bg-rose-50 px-1.5 py-0.5 rounded">
                       {config.barcodeTextSize}
                     </span>
                   </div>
@@ -1331,13 +1331,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     onChange={(e) =>
                       updateConfig("barcodeTextSize", Number(e.target.value))
                     }
-                    className="w-full accent-amber-600"
+                    className="w-full accent-rose-900"
                   />
                 </div>
               </>
             )}
 
-            <div className="text-[11px] text-slate-600 bg-amber-50 p-3 rounded-md border border-amber-100 leading-relaxed mt-2">
+            <div className="text-[11px] text-slate-600 bg-rose-50 p-3 rounded-md border border-rose-100 leading-relaxed mt-2">
               <strong>Dica de Impressão:</strong> Para leitores ópticos em
               etiquetas térmicas, use fundo branco puro e ajuste a densidade da
               impressora se as barras ficarem borradas.
@@ -1373,7 +1373,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("serrilha", Number(e.target.value))
                       }
-                      className="flex-grow accent-amber-600"
+                      className="flex-grow accent-rose-900"
                     />
                     <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                       {config.serrilha}mm
@@ -1392,7 +1392,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("precoPrefix", e.target.value)
                       }
-                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500"
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900"
                     />
                   </div>
                   <div className="col-span-2 flex flex-col gap-1">
@@ -1403,7 +1403,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       type="text"
                       value={config.preco}
                       onChange={(e) => updateConfig("preco", e.target.value)}
-                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-amber-500 font-bold"
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs w-full outline-none focus:border-rose-900 font-bold"
                     />
                   </div>
                 </div>
@@ -1421,7 +1421,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       onChange={(e) =>
                         updateConfig("sizePreco", Number(e.target.value))
                       }
-                      className="flex-grow accent-amber-600"
+                      className="flex-grow accent-rose-900"
                     />
                     <span className="text-[10px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono">
                       {config.sizePreco}px
@@ -1453,7 +1453,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             updateConfig("promoText", e.target.value)
                           }
                           placeholder="Ex: OFERTA"
-                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-amber-500"
+                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-rose-900"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -1467,7 +1467,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                             updateConfig("precoAntigo", e.target.value)
                           }
                           placeholder="Ex: De: R$ 50,00"
-                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-amber-500 font-medium"
+                          className="bg-white border border-slate-300 px-2 py-1.5 rounded text-[11px] w-full outline-none focus:border-rose-900 font-medium"
                         />
                       </div>
                     </div>
@@ -1487,7 +1487,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
             <div className="flex items-center gap-2">
               <select
                 onChange={handleLoadPreset}
-                className="bg-white border border-slate-300 text-slate-700 px-2 py-1.5 rounded-md text-xs outline-none focus:border-amber-500 flex-1 shadow-sm font-medium"
+                className="bg-white border border-slate-300 text-slate-700 px-2 py-1.5 rounded-md text-xs outline-none focus:border-rose-900 flex-1 shadow-sm font-medium"
                 value={currentPresetName || ""}
               >
                 <option value="">Nenhum / Novo...</option>
@@ -1502,14 +1502,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
             <div className="grid grid-cols-2 gap-2 mt-1">
               <button
                 onClick={handleSavePreset}
-                className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
+                className="bg-white border border-slate-300 text-slate-700 hover:text-rose-900 p-1.5 rounded text-xs font-semibold hover:bg-rose-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
                 <Save size={12} />{" "}
                 {currentPresetName ? "Sobrescrever" : "Salvar Novo"}
               </button>
               <button
                 onClick={handleSetDefault}
-                className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
+                className="bg-white border border-slate-300 text-slate-700 hover:text-rose-900 p-1.5 rounded text-xs font-semibold hover:bg-rose-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
               >
                 <Star size={12} /> Padrão Inicial
               </button>
@@ -1517,7 +1517,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 <>
                   <button
                     onClick={handleRenamePreset}
-                    className="bg-white border border-slate-300 text-slate-700 hover:text-amber-700 p-1.5 rounded text-xs font-semibold hover:bg-amber-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
+                    className="bg-white border border-slate-300 text-slate-700 hover:text-rose-900 p-1.5 rounded text-xs font-semibold hover:bg-rose-50 transition-colors flex items-center justify-center gap-1 shadow-sm"
                   >
                     <Edit2 size={12} /> Renomear
                   </button>
@@ -1551,7 +1551,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     type="text"
                     value={modalInput}
                     onChange={(e) => setModalInput(e.target.value)}
-                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
                     placeholder="Ex: Minha Etiqueta"
                     autoFocus
                   />
@@ -1565,7 +1565,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   </button>
                   <button
                     onClick={() => executeSavePreset(modalInput)}
-                    className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm"
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-900 hover:bg-rose-950 rounded shadow-sm"
                   >
                     Salvar
                   </button>
@@ -1584,7 +1584,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     type="text"
                     value={modalInput}
                     onChange={(e) => setModalInput(e.target.value)}
-                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
                     placeholder="Ex: Novo Nome"
                     autoFocus
                   />
@@ -1598,7 +1598,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   </button>
                   <button
                     onClick={() => executeRenamePreset(modalInput)}
-                    className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm"
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-900 hover:bg-rose-950 rounded shadow-sm"
                   >
                     Renomear
                   </button>
@@ -1638,7 +1638,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 <div className="flex justify-end mt-2">
                   <button
                     onClick={() => setModalState({ type: null })}
-                    className="px-3 py-1.5 text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded shadow-sm"
+                    className="px-3 py-1.5 text-xs font-semibold text-white bg-rose-900 hover:bg-rose-950 rounded shadow-sm"
                   >
                     OK
                   </button>
