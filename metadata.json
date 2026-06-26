@@ -1,0 +1,8 @@
+{
+  "name": "Remix: PAAUV Print Studio",
+  "description": "Software de impressão de etiquetas térmicas integrado e otimizado para ERP. Suporte a formatos dinâmicos, códigos de barras (Code 128, EAN-13, UPC-A, QR) e customização avançada.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
