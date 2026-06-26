@@ -20,6 +20,7 @@ import {
   Edit2,
 } from "lucide-react";
 import { loadPresetsFromDB, savePresetsToDB, saveDefaultPresetToDB } from "../lib/presets";
+import { useAuth } from "../lib/AuthContext";
 
 interface SidebarProps {
   config: LabelConfig;
@@ -46,6 +47,7 @@ const Switch = ({
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "layout" | "content" | "barcode" | "price"
   >("layout");
@@ -61,13 +63,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
 
   useEffect(() => {
     const fetchPresets = async () => {
-      const loaded = await loadPresetsFromDB();
+      if (!user) return;
+      const loaded = await loadPresetsFromDB(user.uid);
       if (loaded && Object.keys(loaded).length > 0) {
         setSavedPresets(loaded);
       }
     };
     fetchPresets();
-  }, []);
+  }, [user]);
 
   const handleSavePreset = () => {
     setModalInput(currentPresetName);
@@ -75,10 +78,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   };
 
   const executeSavePreset = async (name: string) => {
-    if (name) {
+    if (name && user) {
       const newPresets = { ...savedPresets, [name]: config };
       setSavedPresets(newPresets);
-      await savePresetsToDB(newPresets);
+      await savePresetsToDB(user.uid, newPresets);
       setCurrentPresetName(name);
     }
     setModalState({ type: null });
@@ -91,12 +94,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   };
 
   const executeRenamePreset = async (newName: string) => {
-    if (newName && newName !== currentPresetName) {
+    if (newName && newName !== currentPresetName && user) {
       const newPresets = { ...savedPresets };
       newPresets[newName] = newPresets[currentPresetName];
       delete newPresets[currentPresetName];
       setSavedPresets(newPresets);
-      await savePresetsToDB(newPresets);
+      await savePresetsToDB(user.uid, newPresets);
       setCurrentPresetName(newName);
     }
     setModalState({ type: null });
@@ -108,18 +111,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   };
 
   const executeDeletePreset = async () => {
-    if (currentPresetName) {
+    if (currentPresetName && user) {
       const newPresets = { ...savedPresets };
       delete newPresets[currentPresetName];
       setSavedPresets(newPresets);
-      await savePresetsToDB(newPresets);
+      await savePresetsToDB(user.uid, newPresets);
       setCurrentPresetName("");
     }
     setModalState({ type: null });
   };
 
   const handleSetDefault = async () => {
-    await saveDefaultPresetToDB(config);
+    if (!user) return;
+    await saveDefaultPresetToDB(user.uid, config);
     setModalState({
       type: "alert",
       message: "Configuração atual salva como o padrão ao abrir o aplicativo!",
