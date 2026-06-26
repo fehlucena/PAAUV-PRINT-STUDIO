@@ -6,6 +6,7 @@ import { LabelConfig, CustomElement } from "../types";
 
 interface LabelPreviewProps {
   config: LabelConfig;
+  configs?: LabelConfig[];
   updateConfig?: (key: keyof LabelConfig, value: any) => void;
 }
 
@@ -51,8 +52,24 @@ const SingleTag: React.FC<{
   config: LabelConfig;
   isLast: boolean;
   colWidth: number;
+  isEmpty?: boolean;
   updateConfig?: (key: keyof LabelConfig, value: any) => void;
-}> = ({ config, isLast, colWidth, updateConfig }) => {
+}> = ({ config, isLast, colWidth, isEmpty, updateConfig }) => {
+  if (isEmpty) {
+    return (
+      <div
+        className={`relative ${
+          !isLast ? "border-r border-dashed border-gray-300" : ""
+        }`}
+        style={{
+          width: `${colWidth}mm`,
+          height: `${config.height}mm`,
+          overflow: "hidden",
+        }}
+      ></div>
+    );
+  }
+
   const renderHeaderLayout = () => {
     const logoEl =
       config.showLogo && config.logoBase64 ? (
@@ -480,7 +497,7 @@ const SingleTag: React.FC<{
 };
 
 export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
-  ({ config, updateConfig }, ref) => {
+  ({ config, configs, updateConfig }, ref) => {
     const colWidth = config.width / config.columns;
 
     return (
@@ -502,15 +519,23 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
         `}
         </style>
 
-        {Array.from({ length: config.columns }).map((_, i) => (
-          <SingleTag
-            key={i}
-            config={config}
-            isLast={i === config.columns - 1}
-            colWidth={colWidth}
-            updateConfig={updateConfig}
-          />
-        ))}
+        {Array.from({ length: config.columns }).map((_, i) => {
+          // If configs are provided, use the specific config for this column
+          // If it doesn't exist (e.g., odd number of items), we can just use the base config 
+          // or an empty config, but let's use the provided item if available, otherwise config.
+          const hasItem = configs ? !!configs[i] : true;
+          const itemConfig = (configs && configs[i]) ? { ...config, ...configs[i] } : config;
+          return (
+            <SingleTag
+              key={i}
+              config={itemConfig}
+              isLast={i === config.columns - 1}
+              colWidth={colWidth}
+              isEmpty={!hasItem}
+              updateConfig={updateConfig}
+            />
+          );
+        })}
       </div>
     );
   },

@@ -1,0 +1,574 @@
+import React, { useState, useRef, useMemo } from 'react';
+import { Camera, X, Upload } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { avaliarLocal } from '../lib/fastEval';
+
+async function callIA({ content, search }: { content: any[], search: boolean }) {
+  const headers = { "Content-Type": "application/json" };
+  const body = { content, search };
+  
+  const r = await fetch("/api/triagem", {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body)
+  });
+  
+  if (!r.ok) {
+    let errMsg = "";
+    try {
+      const j = await r.json();
+      errMsg = j.error || j.message || "";
+    } catch {
+      errMsg = await r.text().catch(() => "");
+    }
+    throw new Error(errMsg || "Erro na IA: " + r.status);
+  }
+  
+  return await r.json();
+}
+
+const CATEGORIAS = [
+  { cod:"CAT1", nome:"CAT 1 - Camisetas e Tops", emoji:"👕", sub: ["Camiseta / T-shirt", "Blusa", "Regata", "Top / Cropped"] },
+  { cod:"CAT2", nome:"CAT 2 - Camisas e Blusas Finais", emoji:"👔", sub: ["Camisa Social", "Camisa Polo", "Blusa Diferenciada / Tecido Fino"] },
+  { cod:"CAT3", nome:"CAT 3 - Partes de Baixo", emoji:"👖", sub: ["Calça Jeans", "Calça de Tecido / Alfaiataria", "Shorts", "Bermuda", "Saia Curta", "Saia Midi / Longa"] },
+  { cod:"CAT4", nome:"CAT 4 - Vestidos e Macacões", emoji:"👗", sub: ["Vestido Curto / Casual", "Vestido Midi / Longo", "Vestido de Festa", "Macacão", "Macaquinho"] },
+  { cod:"CAT5", nome:"CAT 5 - Casacos e Frio", emoji:"🧥", sub: ["Casaco Leve", "Casaco Pesado / Lã", "Moletom Fechado", "Moletom Aberto (Zíper)", "Jaqueta Jeans / Leve", "Jaqueta Premium / Frio", "Tricô / Suéter"] },
+  { cod:"CAT6", nome:"CAT 6 - Alfaiataria", emoji:"🤵", sub: ["Blazer Feminino", "Blazer Masculino", "Terno Completo", "Calça Social Masculina"] },
+  { cod:"CAT7", nome:"CAT 7 - Infantil", emoji:"🧸", sub: ["Camiseta / Blusa Infantil", "Calça / Bermuda Infantil", "Vestido / Saia Infantil", "Casaco Infantil", "Conjunto Infantil", "Calçado Infantil"] },
+  { cod:"CAT8", nome:"CAT 8 - Calçados", emoji:"👟", sub: ["Tênis Esportivo / Corrida", "Tênis Casual", "Sandália", "Rasteirinha", "Bota / Coturno", "Sapato de Salto / Scarpin", "Chinelo", "Sapatênis / Mocassim"] },
+  { cod:"CAT9", nome:"CAT 9 - Acessórios", emoji:"👜", sub: ["Bolsa Pequena / Clutch", "Bolsa Média", "Bolsa Grande / Sacola", "Mochila", "Carteira", "Cinto", "Boné / Chapéu", "Bijuteria", "Óculos", "Lenço / Cachecol", "Gravata"] },
+];
+
+const ESTADOS = [
+  { id:"Nova com etiqueta", curto:"Nova / Etiqueta", desc:"Nunca usada, tags originais" },
+  { id:"Usada impecável", curto:"Usada Impecável", desc:"Sem marcas, parece nova" },
+  { id:"Boa", curto:"Boa / Normal", desc:"Uso normal, sem defeito" },
+  { id:"Com ressalva (desgaste leve)", curto:"Com ressalva", desc:"Desbotado leve, bolinhas" },
+  { id:"Reprovar (dano sério)", curto:"Reprovar / Dano", desc:"Manchas, rasgos, mofo" },
+];
+
+const BRANDS = [
+  "Abercrombie", "Adidas", "Aero", "Aeropostale", "Amaro", "Animale", "Aramis", "Arezzo", "Armani", "Asics", "Balenciaga", "Baw", "Beagle", "Billabong", 
+  "Bobô", "Bottega Veneta", "Brooksfield", "Burberry", "Bvlgari", "C&A", "Calvin Klein", "Cantão", "Capodarte", "Carmim", "Carolina Herrera", 
+  "Cartier", "Cavalera", "Chanel", "Chloé", "Coach", "Coca-Cola", "Colcci", "Converse", "Corello", "Cotton On", "Damyller", "Diesel", "Dior", 
+  "Dolce & Gabbana", "Dress To", "Dudalina", "Dzarm", "Ellus", "Emporio Armani", "Eva", "Farm", "Fendi", "Fila", 
+  "Forever 21", "Forum", "Gap", "Givenchy", "Gucci", "Guess", "Hang Loose", "Havaianas", "Hering", "Hermès", "Hollister",
+  "Hugo Boss", "Individual", "John John", "Kenner", "Khelf", "Lacoste", "Le Lis Blanc", "Leitura", "Levi's", "Lez a Lez", "Lojas Renner",
+  "Louis Vuitton", "Louboutin", "Luiza Barcelos", "Lupo", "Mac", "Maca", "Malwee", "Maria Filó", "Marisa", "Mcd", "Melissa", 
+  "Michael Kors", "Miumiu", "Mizuno", "Mormaii", "Morena Rosa", "New Balance", "Nike", "Oakley", "Off-White", "Olympikus", "Osklen", 
+  "Pandora", "Polo Ralph Lauren", "Polo Wear", "Prada", "Puma", "Quiksilver", "Ralph Lauren", "Ray-Ban",
+  "Renner", "Reserva", "Riachuelo", "Richards", "Rip Curl", "Rolex", "Salinas", "Santa Lolla", "Schutz", 
+  "Shein", "Shopee", "Shoulder", "Siberian", "Swarovski", "Tag Heuer", "TNG", "Tommy Hilfiger", "Triton", "Valentino", "Vans", 
+  "Versace", "Via Mia", "Victor Hugo", "Vilebrequin", "Vivara", "VR", "Yeezy", "Youcom", "Yves Saint Laurent", "ZARA", "Zara", "Zatti", "Zinzane", "Zattini"
+];
+const POPULAR = ["Zara", "Farm", "Renner", "C&A", "Shein", "Nike", "Adidas", "Hering"];
+const PREMIUM = new Set(["Osklen","Lacoste","Calvin Klein","Ralph Lauren","Polo Ralph Lauren","Schutz","Dudalina","Richards","Burberry","Hugo Boss","Prada","Gucci","Louis Vuitton","Coach","Michael Kors","Diesel","Dior","Pandora","John John","Le Lis Blanc","Animale","Brooksfield","New Balance","Nike"]);
+const TENIS_ESPECIAL = new Set(["Jordan","New Balance","Nike"]);
+
+const FIXO: Record<string, number> = {N1:10,N2:20,N3:30,N4:50,N5:80,N6:100,N7:120,N8:150,N9:200,N10:250};
+const FIXO_LABEL: Record<string, string> = {N1:"Simples",N2:"Boa",N3:"Destaque",N4:"Premium",N5:"Premium superior",N6:"Especial",N7:"Avaliado",N8:"Avaliado",N9:"Avaliado",N10:"Especial / Luxo"};
+
+const MEGA: Record<string, number> = {N1:5,N2:10,N3:20,N4:30,N5:50,N6:80,N7:100,P1:120,P2:150};
+const MEGA_LABEL: Record<string, string> = {N1:"Base",N2:"Popular",N3:"Boa",N4:"Destaque",N5:"Premium",N6:"Premium superior",N7:"Teto evento",P1:"Setor premium",P2:"Premium especial"};
+
+const COR_NIVEL: Record<string, string> = {
+  N1:"#8BA582",N2:"#8BA582",N3:"#A3C6C4",N4:"#A3C6C4",
+  N5:"#FD9140",N6:"#FD9140",N7:"#1D1C1C",N8:"#1D1C1C",N9:"#1D1C1C",N10:"#1D1C1C",
+  P1:"#1D1C1C",P2:"#1D1C1C",REPROVADA:"#F5D6E0",
+};
+
+const TEXT_COR_NIVEL: Record<string, string> = {
+  N1:"#1D1C1C",N2:"#1D1C1C",N3:"#1D1C1C",N4:"#1D1C1C",
+  N5:"#1D1C1C",N6:"#1D1C1C",N7:"#FFF48D",N8:"#FFF48D",N9:"#FFF48D",N10:"#FFF48D",
+  P1:"#FFF48D",P2:"#FFF48D",REPROVADA:"#1D1C1C",
+};
+
+function nivelLabel(nivel: string, tipoBazar: string) {
+  if (nivel === "EXATO") return "Cálculo IA";
+  const tbl = tipoBazar === "mega" ? MEGA_LABEL : FIXO_LABEL;
+  return tbl[nivel] || nivel;
+}
+function nivelCor(nivel: string) { 
+  if (nivel === "EXATO") return "#1D1C1C";
+  return COR_NIVEL[nivel] || "#FFF48D"; 
+}
+function nivelTextCor(nivel: string) { 
+  if (nivel === "EXATO") return "#FFF48D";
+  return TEXT_COR_NIVEL[nivel] || "#1D1C1C"; 
+}
+
+// ─── ResultCard ───
+function ResultCard({ r, onAdj, onNova }: { r: any, onAdj: (v: number) => void, onNova: () => void }) {
+  const rep = r.nivel === "REPROVADA";
+  const tbl = r.tipo_bazar === "mega" ? MEGA : FIXO;
+  const keys = Object.keys(tbl);
+  const nn = r.nivelAdj || r.nivel;
+  const preco = nn === "EXATO" ? r.preco : (tbl[nn] || 0);
+  const cor = nivelCor(nn);
+  const textCor = nivelTextCor(nn);
+  const canDown = !rep && keys.indexOf(nn) > 0 && nn !== "EXATO";
+  const canUp = !rep && keys.indexOf(nn) < keys.length - 1 && nn !== "EXATO";
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full">
+      <div className="border-2 border-wero-black bg-wero-white shadow-[8px_8px_0_#1D1C1C] overflow-hidden flex flex-col md:flex-row rounded-lg">
+        
+        {/* Left Side: Price Block */}
+        <div className="p-8 flex flex-col items-center justify-center min-w-[200px] border-b-2 md:border-b-0 md:border-r-2 border-wero-black transition-colors organic-blob-btn" style={{ backgroundColor: cor, color: textCor }}>
+          {rep ? (
+            <>
+              <span className="font-impact uppercase tracking-widest text-xs opacity-80 mb-2">Triagem</span>
+              <span className="font-impact text-6xl">✕</span>
+              <span className="font-mono text-xs uppercase font-bold mt-2 opacity-80">Reprovada</span>
+            </>
+          ) : (
+            <>
+              <span className="font-impact uppercase tracking-widest text-xs opacity-80 mb-2">{r.tipo_bazar === "mega" ? "Megabazar" : "Bazar fixo"}</span>
+              <div className="flex items-start">
+                <span className="font-classic font-bold text-xl mt-2 mr-1 opacity-80">R$</span>
+                <span className="font-impact text-7xl">{preco}</span>
+              </div>
+              <span className="font-mono text-xs uppercase font-bold mt-2 opacity-80 text-center">{nn} · {nivelLabel(nn, r.tipo_bazar)}</span>
+              
+              <div className="flex gap-4 mt-6">
+                <button 
+                  onClick={() => canDown && onAdj(-1)} 
+                  disabled={!canDown}
+                  className="w-10 h-10 border-2 border-current flex items-center justify-center font-impact text-2xl hover:bg-black/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                >−</button>
+                <button 
+                  onClick={() => canUp && onAdj(1)} 
+                  disabled={!canUp}
+                  className="w-10 h-10 border-2 border-current flex items-center justify-center font-impact text-2xl hover:bg-black/10 disabled:opacity-30 disabled:hover:bg-transparent transition-all"
+                >+</button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Right Side: Details */}
+        <div className="p-6 md:p-8 flex-1 flex flex-col">
+          <div className="font-impact text-wero-carrot uppercase tracking-widest text-sm">{r.categoria_nome}</div>
+          {r.tipo_peca && <div className="font-classic font-bold text-xl mt-1">{r.tipo_peca}</div>}
+          {r.estado_avaliado && <div className="font-classic italic opacity-70 mt-1">{r.estado_avaliado}</div>}
+          
+          <p className="body-copy text-[15px] mt-4 bg-wero-grey/30 p-4 border-l-4 border-wero-black">{r.justificativa}</p>
+          
+          {r.valor_mercado_pesquisado && (
+            <div className="mt-4 bg-wero-green/20 p-3 border-2 border-wero-green/50 rounded flex gap-2">
+              <span className="font-impact text-wero-green mt-0.5">🔎</span>
+              <p className="body-copy text-sm"><strong className="font-classic text-wero-black uppercase text-xs tracking-wider">Busca Web:</strong> {r.valor_mercado_pesquisado}</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2 mt-6">
+            {r.marca_identificada && <span className="text-xs font-mono uppercase bg-wero-yellow font-bold border-2 border-wero-black px-3 py-1.5 organic-blob-btn">{r.marca_identificada}{r.marca_grupo ? ` · ${r.marca_grupo}` : ""}</span>}
+            {r.com_ressalva && <span className="text-xs font-mono uppercase bg-wero-carrot text-wero-white font-bold border-2 border-wero-black px-3 py-1.5 organic-blob-btn">Com ressalva</span>}
+            {r.regra35 && <span className="text-xs font-mono uppercase bg-wero-black text-wero-white font-bold border-2 border-wero-black px-3 py-1.5 organic-blob-btn">Regra dos 35%</span>}
+            {r.pesquisou_web && <span className="text-xs font-mono uppercase bg-wero-green font-bold border-2 border-wero-black px-3 py-1.5 organic-blob-btn cursor-help" title="A IA pesquisou o preço desta marca online">🔎 Pesquisado</span>}
+            {r.revisao_necessaria && <span className="text-xs font-mono uppercase bg-wero-pink font-bold border-2 border-wero-black px-3 py-1.5 organic-blob-btn">⚑ Revisão</span>}
+          </div>
+          
+          {Array.isArray(r.alertas) && r.alertas.length > 0 && (
+            <div className="mt-6 pt-6 border-t-2 border-wero-black/10">
+              {r.alertas.map((a: string, i: number) => (
+                <div key={i} className="flex gap-2 items-start mt-2">
+                  <span className="text-wero-carrot font-impact">!</span>
+                  <span className="body-copy text-sm opacity-80">{a}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      <button 
+        onClick={onNova}
+        className="w-full mt-6 p-4 border-2 border-wero-black bg-wero-white hover:bg-wero-yellow font-impact uppercase text-lg transition-all rounded-md shadow-[4px_4px_0_#1D1C1C] hover:translate-y-1 hover:shadow-[0px_0px_0_#1D1C1C]"
+      >
+        + Avaliar Próxima Peça
+      </button>
+    </motion.div>
+  );
+}
+
+// ─── Forms ───
+
+function ManualForm({ tipoBazar, onResult }: { tipoBazar: string, onResult: any }) {
+  const [step, setStep] = useState(1);
+  const [cat, setCat] = useState<any>(null);
+  const [itemType, setItemType] = useState<string>("");
+  const [marca, setMarca] = useState("");
+  const [query, setQuery] = useState("");
+  const [semMarca, setSemMarca] = useState(false);
+  const [estado, setEstado] = useState<string | null>(null);
+  const [apelo, setApelo] = useState(false);
+  const [note, setNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const sugest = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return q ? BRANDS.filter(b => b.toLowerCase().includes(q)).slice(0, 5) : [];
+  }, [query]);
+
+  const marcaFinal = semMarca ? "" : (marca || query.trim());
+  const desconhecida = marcaFinal && !BRANDS.some(b => b.toLowerCase() === marcaFinal.toLowerCase());
+  const isPremiumShoe = cat?.cod === "CAT8" && ["Nike","Adidas","Puma","Asics","Mizuno","New Balance","Vans","Jordan","Yeezy"].includes(marcaFinal);
+  const isPremiumBrand = ["Michael Kors","Coach","Gucci","Louis Vuitton","Prada","Burberry","Hugo Boss","Armani"].includes(marcaFinal);
+  const precisaBusca = (!semMarca && (desconhecida || isPremiumShoe || isPremiumBrand));
+  const escolher = (b: string) => { setMarca(b); setQuery(b); setSemMarca(false); setStep(4); };
+
+  const avaliar = async () => {
+    if (!cat) { setError("Selecione a categoria."); return; }
+    if (!itemType) { setError("Selecione o tipo."); return; }
+    if (!estado) { setError("Selecione o estado da peça."); return; }
+    setError(""); setLoading(true);
+
+    setTimeout(() => {
+      const result = avaliarLocal({ cat, estado, marcaFinal, semMarca, apelo, tipoBazar, itemType });
+      onResult(result);
+      setLoading(false);
+    }, 400);
+  };
+
+  const handlePrevStep = () => {
+    setStep(s => s - 1);
+  };
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 w-full mt-8">
+      
+      {/* ProgressBar */}
+      <div className="flex gap-2 mb-4">
+        {[1,2,3,4,5].map(nu => (
+          <div key={nu} className={`h-2 flex-1 rounded-full transition-all duration-300 ${step >= nu ? 'bg-wero-carrot' : 'bg-wero-grey'}`}></div>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {step === 1 && (
+          <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} transition={{ duration: 0.2 }}>
+            <label className="font-impact uppercase tracking-widest text-sm opacity-80 mb-4 block">1. Categoria</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {CATEGORIAS.map(c => (
+                <button 
+                  key={c.cod} 
+                  className={`p-4 border-2 rounded-md border-wero-black text-left flex items-center gap-3 transition-all ${cat?.cod === c.cod ? 'bg-wero-black text-wero-yellow shadow-[4px_4px_0_#FD9140]' : 'bg-wero-white hover:bg-wero-grey hover:-translate-y-1'}`}
+                  onClick={() => { setCat(c); setItemType(""); setStep(2); }}
+                >
+                  <span className="text-3xl leading-none">{c.emoji}</span>
+                  <span className="font-classic font-semibold text-[15px] leading-tight flex-1">{c.nome}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {step === 2 && (
+          <motion.div key="step2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} transition={{ duration: 0.2 }}>
+            <button onClick={handlePrevStep} className="font-impact uppercase text-xs mb-4 text-wero-carrot hover:text-wero-black transition-colors organic-blob-btn">← Voltar para Categorias</button>
+            <label className="font-impact uppercase tracking-widest text-sm opacity-80 mb-4 block">2. Selecione a Peça Exata em: {cat?.nome}</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {cat?.sub?.map((sub: string) => (
+                <button 
+                  key={sub} 
+                  className={`p-4 border-2 rounded-md border-wero-black text-left flex items-start gap-2 transition-all ${itemType === sub ? 'bg-wero-black text-wero-yellow shadow-[4px_4px_0_#FD9140]' : 'bg-wero-white hover:bg-wero-grey hover:-translate-y-1'}`}
+                  onClick={() => { setItemType(sub); setStep(3); }}
+                >
+                  <span className="font-classic font-semibold text-sm leading-tight flex-1">{sub}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {step === 3 && (
+          <motion.div key="step3" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} transition={{ duration: 0.2 }}>
+            <button onClick={handlePrevStep} className="font-impact uppercase text-xs mb-4 text-wero-carrot hover:text-wero-black transition-colors organic-blob-btn">← Voltar para Tipo</button>
+            <label className="font-impact uppercase tracking-widest text-sm opacity-80 mb-4 block">3. Marca da Peça</label>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button className={`px-4 py-3 border-2 rounded-md border-wero-black font-classic font-semibold text-sm transition-all ${semMarca ? 'bg-wero-black text-wero-white' : 'bg-wero-white hover:bg-wero-grey hover:-translate-y-1'}`} onClick={() => { setSemMarca(true); setMarca(""); setQuery(""); setStep(4); }}>Sem marca / Popular</button>
+              {POPULAR.map(b => (
+                <button key={b} className={`px-4 py-3 border-2 rounded-md border-wero-black font-classic font-semibold text-sm transition-all ${!semMarca && marcaFinal === b ? 'bg-wero-yellow text-wero-black' : 'bg-wero-white hover:bg-wero-grey hover:-translate-y-1'}`} onClick={() => escolher(b)}>{b}</button>
+              ))}
+            </div>
+            {!semMarca && (
+              <div className="relative mt-4 bg-wero-grey p-4 border-2 rounded-md border-wero-black">
+                <label className="font-classic text-sm font-bold block mb-2 opacity-70">Não achou? Digite a marca exata:</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    className="flex-1 p-4 border-2 rounded-md border-wero-black bg-wero-white focus:bg-wero-yellow/20 outline-none body-copy" 
+                    placeholder="Nome da marca..." 
+                    value={query} 
+                    onChange={e => { setQuery(e.target.value); setMarca(""); }} 
+                  />
+                  <button onClick={() => { if(query.trim() || marca) setStep(4); else setStep(4); }} className="bg-wero-black text-wero-white font-impact uppercase px-6 border-2 rounded-md border-wero-black hover:bg-wero-carrot hover:text-wero-black transition-colors shadow-[2px_2px_0_#1D1C1C]">OK</button>
+                </div>
+                {sugest.length > 0 && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-wero-white border-2 border-wero-black z-10 shadow-[4px_4px_0_#1D1C1C] organic-card flex flex-wrap p-3 gap-2 rounded-md">
+                    {sugest.map(b => (
+                      <button key={b} className="px-3 py-2 bg-wero-grey font-classic text-sm border-2 rounded-md border-transparent hover:border-wero-black hover:bg-wero-yellow transition-colors organic-blob-btn" onClick={() => escolher(b)}>{b}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {step === 4 && (
+          <motion.div key="step4" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} transition={{ duration: 0.2 }}>
+            <button onClick={handlePrevStep} className="font-impact uppercase text-xs mb-4 text-wero-carrot hover:text-wero-black transition-colors organic-blob-btn">← Voltar para Marca</button>
+            <label className="font-impact uppercase tracking-widest text-sm opacity-80 mb-4 block">4. Condição da Peça</label>
+            <div className="flex flex-col gap-3">
+              {ESTADOS.map(es => (
+                <button 
+                  key={es.id} 
+                  className={`p-4 border-2 rounded-md border-wero-black text-left flex flex-col transition-all organic-card ${estado === es.id ? (es.id.startsWith("Reprovar") ? 'bg-wero-carrot text-wero-black' : 'bg-wero-black text-wero-white shadow-[4px_4px_0_#A3C6C4]') : 'bg-wero-white hover:bg-wero-grey hover:-translate-y-1'}`}
+                  onClick={() => { setEstado(es.id); setStep(5); }}
+                >
+                  <span className="font-classic font-bold text-lg">{es.curto}</span>
+                  <span className="font-classic text-sm opacity-70 mt-1">{es.desc}</span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {step === 5 && (
+          <motion.div key="step5" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }} transition={{ duration: 0.2 }} className="bg-wero-grey/30 border-2 border-wero-black p-6 rounded-[4px]">
+            <button onClick={handlePrevStep} className="font-impact uppercase text-xs mb-4 text-wero-carrot hover:text-wero-black transition-colors organic-blob-btn">← Voltar para Estado</button>
+            <label className="font-impact uppercase tracking-widest text-sm opacity-80 mb-4 block">5. Confirme os Dados</label>
+            
+            <div className="font-mono text-xs md:text-sm mb-6 bg-wero-white p-4 border-2 border-wero-black/20 break-words leading-relaxed rounded-md border-dashed shadow-[2px_2px_0_#1D1C1C]">
+              <span className="font-bold uppercase tracking-widest">Resumo:</span><br/>
+              {cat?.nome} ({itemType})<br/>
+              {semMarca ? "Sem Marca" : marcaFinal} / {estado}
+            </div>
+
+            <button 
+              className={`px-4 py-4 w-full border-2 border-wero-black font-classic font-bold text-[15px] transition-all mb-4 rounded-md ${apelo ? 'bg-wero-pink border-wero-black shadow-[4px_4px_0_#1D1C1C] -translate-y-1' : 'bg-wero-white hover:bg-wero-pink/50'}`} 
+              onClick={() => setApelo(!apelo)}
+            >
+              ✨ Essa Peça tem muito apelo/destaque?
+            </button>
+            
+            {error && <div className="mt-4 p-3 bg-wero-carrot/20 border-2 border-wero-carrot text-wero-carrot font-classic font-semibold text-sm">{error}</div>}
+            
+            <button 
+              onClick={avaliar} 
+              disabled={loading}
+              className="w-full mt-2 p-5 border-2 border-wero-black rounded-md bg-wero-black text-wero-yellow font-impact uppercase text-xl transition-all hover:bg-wero-carrot hover:text-black disabled:opacity-50 disabled:hover:bg-wero-black disabled:hover:text-wero-yellow flex items-center justify-center gap-2 shadow-[4px_4px_0_#1D1C1C] hover:translate-y-1 hover:shadow-[0px_0px_0_#1D1C1C]"
+            >
+              {loading ? (
+                <><span className="w-5 h-5 border-2 border-wero-yellow border-t-transparent rounded-full animate-spin"></span> Processando...</>
+              ) : "Ver Preço Sugerido"}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+    </motion.div>
+  );
+}
+
+function AIForm({ tipoBazar, onResult }: { tipoBazar: string, onResult: any }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string>("");
+  const [extraInfo, setExtraInfo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+       const f = e.target.files[0];
+       setFile(f);
+       setPreview(URL.createObjectURL(f));
+    }
+  };
+
+  const processImage = async (useWebSearch: boolean) => {
+    if (!file) { setError("Adicione uma foto da peça."); return; }
+    setLoading(true); setError("");
+
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onloadend = async () => {
+        try {
+          const base64data = (reader.result as string).split(',')[1];
+          const mimeType = file.type;
+
+          const content: any[] = [
+            { type: "image", source: { media_type: mimeType, data: base64data } },
+          ];
+          
+          const textPrompt = `Estou avaliando para o formato: ${tipoBazar === 'mega' ? 'Megabazar' : 'Bazar fixo'}. ${extraInfo ? `Anotação extra: ${extraInfo}` : ''}`;
+          content.push({ type: "text", text: textPrompt });
+          
+          const res = await callIA({ 
+              content, 
+              search: useWebSearch
+          });
+          
+          onResult(res);
+        } catch (err: any) {
+          setError(err.message || "Erro ao processar imagem.");
+          setLoading(false);
+        }
+      };
+    } catch (err: any) {
+       setError(err.message || "Erro ao ler a foto.");
+       setLoading(false);
+    }
+  };
+
+  return (
+     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-6 w-full mt-4">
+        <div className="flex flex-col gap-4">
+           {!preview ? (
+             <label className="border-2 border-dashed border-wero-black bg-wero-white p-10 flex flex-col items-center justify-center cursor-pointer hover:bg-wero-yellow/20 transition-all rounded-md group">
+               <Camera className="w-12 h-12 mb-4 text-wero-black group-hover:scale-110 transition-transform" />
+               <span className="font-impact uppercase tracking-widest text-lg text-center">Tirar Foto ou Escolher</span>
+               <span className="body-copy text-sm opacity-60 mt-2 text-center">A IA avaliará a peça pela imagem</span>
+               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFile} />
+             </label>
+           ) : (
+             <div className="relative border-2 border-wero-black bg-wero-white p-2 rounded-md">
+               <img src={preview} alt="Preview" className="w-full h-64 object-cover bg-wero-grey rounded" />
+               <button onClick={() => { setFile(null); setPreview(""); }} className="absolute top-4 right-4 bg-wero-black text-wero-white p-2 rounded hover:bg-wero-carrot transition-colors organic-blob-btn">
+                 <X className="w-5 h-5"/>
+               </button>
+             </div>
+           )}
+
+           <textarea 
+             className="w-full p-4 border-2 border-wero-black rounded-md bg-wero-white focus:bg-wero-yellow/20 outline-none body-copy resize-none mt-2 transition-colors organic-blob-btn"
+             rows={2}
+             placeholder="Algum desgaste que não aparece na foto? (Opcional)"
+             value={extraInfo}
+             onChange={e => setExtraInfo(e.target.value)}
+           ></textarea>
+        </div>
+
+        {error && <div className="p-3 bg-wero-carrot/20 border-2 border-wero-carrot text-wero-carrot font-classic font-semibold text-sm rounded-md">{error}</div>}
+
+        <div className="flex flex-col md:flex-row gap-3 mt-2">
+            <button 
+               onClick={() => processImage(false)} 
+               disabled={loading || !file}
+               className="flex-1 p-5 border-2 border-wero-black rounded-md bg-wero-black text-wero-yellow font-impact uppercase text-xl transition-all hover:bg-wero-carrot hover:text-black disabled:opacity-50 disabled:hover:bg-wero-black disabled:hover:text-wero-yellow flex items-center justify-center gap-2 shadow-[4px_4px_0_#1D1C1C] hover:translate-y-1 hover:shadow-[0px_0px_0_#1D1C1C]"
+             >
+               {loading ? (
+                 <><span className="w-5 h-5 border-2 border-wero-yellow border-t-transparent rounded-full animate-spin"></span> Avaliando...</>
+               ) : "Avaliar (Rápido)"}
+             </button>
+             
+             <button 
+               onClick={() => processImage(true)} 
+               disabled={loading || !file}
+               className="flex-1 p-5 border-2 border-wero-black rounded-md bg-wero-yellow text-wero-black font-impact uppercase text-xl transition-all hover:bg-wero-carrot hover:text-black disabled:opacity-50 disabled:hover:bg-wero-yellow disabled:hover:text-wero-black flex items-center justify-center gap-2 shadow-[4px_4px_0_#1D1C1C] hover:translate-y-1 hover:shadow-[0px_0px_0_#1D1C1C]"
+             >
+               {loading ? (
+                 <><span className="w-5 h-5 border-2 border-wero-black border-t-transparent rounded-full animate-spin"></span> Avaliando...</>
+               ) : "Item Premium (Busca Web)"}
+             </button>
+         </div>
+     </motion.div>
+  );
+}
+
+// ─── Main Export ───
+export default function ProdutoForm() {
+  const [resultado, setResultado] = useState<any>(null);
+  const [tipoBazar, setTipoBazar] = useState("fixo");
+  const [mode, setMode] = useState<"ia"|"manual">("ia");
+
+  const handleResult = (res: any) => setResultado({ ...res, nivelAdj: res.nivel });
+  const adjNivel = (d: number) => {
+    if (!resultado || resultado.nivel === "REPROVADA") return;
+    const tbl = resultado.tipo_bazar === "mega" ? MEGA : FIXO;
+    const keys = Object.keys(tbl);
+    const cur = keys.indexOf(resultado.nivelAdj || resultado.nivel);
+    const next = Math.max(0, Math.min(keys.length - 1, cur + d));
+    setResultado((r: any) => ({ ...r, nivelAdj: keys[next] }));
+  };
+
+  return (
+    <section id="simulador" className="py-24 px-6 md:px-12 bg-wero-green border-b-2 border-wero-black relative overflow-hidden">
+      {/* Decorative Grid */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none" 
+           style={{ backgroundImage: 'linear-gradient(#1D1C1C 2px, transparent 2px), linear-gradient(90deg, #1D1C1C 2px, transparent 2px)', backgroundSize: '64px 64px' }} />
+      
+      <div className="max-w-4xl mx-auto relative z-10 w-full">
+        
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+          <div>
+            <div className="mb-4 flex items-center gap-4">
+              <h2 className="font-impact text-6xl md:text-8xl wero-text-stroke text-transparent leading-none">09</h2>
+              <h3 className="impact-headline text-3xl md:text-5xl uppercase leading-[0.9]">SIMULADOR<br/><span className="text-wero-white">DE PREÇOS</span></h3>
+            </div>
+            <p className="body-copy max-w-xl text-lg backdrop-blur bg-wero-black/5 p-2">
+              Avalie suas peças manualmente ou por IA com análise visual e busca na web.
+            </p>
+          </div>
+        </div>
+
+        <div className="wero-card p-6 md:p-10 bg-wero-white shadow-wero-black rounded-lg">
+          
+          {/* Main Container */}
+          {resultado ? (
+            <ResultCard r={resultado} onAdj={adjNivel} onNova={() => setResultado(null)} />
+          ) : (
+            <>
+              {/* Type Toggles */}
+              <div className="flex flex-col md:flex-row gap-6 mb-8">
+                {/* Bazar Toggle */}
+                <div className="flex flex-1 gap-2 bg-wero-grey p-2 rounded-md border-2 border-wero-black">
+                  <button 
+                    className={`flex-1 py-3 px-2 rounded-sm font-impact font-bold text-sm uppercase transition-all organic-blob-btn ${tipoBazar === 'fixo' ? 'bg-wero-white border-2 border-wero-black shadow-[2px_2px_0_#1D1C1C]' : 'text-wero-black/60 hover:bg-wero-white/50'}`}
+                    onClick={() => setTipoBazar('fixo')}
+                  >
+                    Bazar Fixo
+                  </button>
+                  <button 
+                    className={`flex-1 py-3 px-2 rounded-sm font-impact font-bold text-sm uppercase transition-all organic-blob-btn ${tipoBazar === 'mega' ? 'bg-wero-white border-2 border-wero-black shadow-[2px_2px_0_#1D1C1C]' : 'text-wero-black/60 hover:bg-wero-white/50'}`}
+                    onClick={() => setTipoBazar('mega')}
+                  >
+                    Megabazar
+                  </button>
+                </div>
+                
+                {/* Mode Toggle */}
+                <div className="flex flex-1 gap-2 bg-wero-grey p-2 rounded-md border-2 border-wero-black">
+                  <button 
+                    className={`flex-1 py-3 px-2 rounded-sm font-impact font-bold text-sm uppercase transition-all flex items-center justify-center gap-2 ${mode === 'ia' ? 'bg-wero-carrot border-2 border-wero-black shadow-[2px_2px_0_#1D1C1C]' : 'text-wero-black/60 hover:bg-wero-white/50'}`}
+                    onClick={() => setMode('ia')}
+                  >
+                    <Camera className="w-4 h-4"/> Avaliar com IA
+                  </button>
+                  <button 
+                    className={`flex-1 py-3 px-2 rounded-sm font-impact font-bold text-sm uppercase transition-all ${mode === 'manual' ? 'bg-wero-white border-2 border-wero-black shadow-[2px_2px_0_#1D1C1C]' : 'text-wero-black/60 hover:bg-wero-white/50'}`}
+                    onClick={() => setMode('manual')}
+                  >
+                    Manual
+                  </button>
+                </div>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div key={mode} initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.2 }}>
+                  {mode === 'ia' ? <AIForm tipoBazar={tipoBazar} onResult={handleResult} /> : <ManualForm tipoBazar={tipoBazar} onResult={handleResult} />}
+                </motion.div>
+              </AnimatePresence>
+            </>
+          )}
+
+        </div>
+
+      </div>
+    </section>
+  );
+}
