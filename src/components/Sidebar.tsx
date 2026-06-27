@@ -79,11 +79,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
 
   const handlePrint = async () => {
     try {
-      await printerServiceRef.current?.print(
-        "printable-area",
-        config.printerQuantity,
-        config.printerIntensity
-      );
+      await printerServiceRef.current?.print("printable-area", {
+        quantity: config.printerQuantity,
+        intensity: config.printerIntensity,
+        speed: config.printerSpeed,
+        mediaType: config.printerMediaType,
+        method: config.printerMethod,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCalibrate = async () => {
+    try {
+      await printerServiceRef.current?.calibrate();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleCancelAll = async () => {
+    try {
+      await printerServiceRef.current?.cancelAll();
     } catch (err) {
       console.error(err);
     }
@@ -1494,16 +1512,73 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
-                  <label className="text-xs font-semibold text-slate-700">Quantidade de Etiquetas</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="50"
-                    value={config.printerQuantity}
-                    onChange={(e) => updateConfig("printerQuantity", Number(e.target.value))}
-                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                  />
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Velocidade</label>
+                    <select
+                      value={config.printerSpeed}
+                      onChange={(e) => updateConfig("printerSpeed", Number(e.target.value))}
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
+                    >
+                      <option value={1}>1 (Lenta)</option>
+                      <option value={2}>2 (Normal)</option>
+                      <option value={3}>3 (Rápida)</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Quantidade</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="50"
+                      value={config.printerQuantity}
+                      onChange={(e) => updateConfig("printerQuantity", Number(e.target.value))}
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Método</label>
+                    <select
+                      value={config.printerMethod}
+                      onChange={(e) => updateConfig("printerMethod", e.target.value)}
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
+                    >
+                      <option value="T">Transf. Térmica</option>
+                      <option value="D">Térmica Direta</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Tipo Mídia</label>
+                    <select
+                      value={config.printerMediaType}
+                      onChange={(e) => updateConfig("printerMediaType", e.target.value)}
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
+                    >
+                      <option value="W">Web (Intervalos)</option>
+                      <option value="M">Marcas Pretas</option>
+                      <option value="C">Contínuo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    onClick={handleCalibrate}
+                    disabled={!printerStatus.connected}
+                    className="py-2 bg-slate-100 text-slate-700 rounded text-[10px] font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
+                  >
+                    CALIBRAR SENSOR
+                  </button>
+                  <button
+                    onClick={handleCancelAll}
+                    disabled={!printerStatus.connected}
+                    className="py-2 bg-slate-100 text-rose-700 rounded text-[10px] font-bold hover:bg-rose-50 transition-colors disabled:opacity-50"
+                  >
+                    CANCELAR TUDO
+                  </button>
                 </div>
               </div>
             </div>

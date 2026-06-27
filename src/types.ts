@@ -131,6 +131,9 @@ export interface LabelConfig {
   // Printer
   printerIntensity: number;
   printerQuantity: number;
+  printerSpeed: number;
+  printerMediaType: "W" | "M" | "C";
+  printerMethod: "T" | "D";
 }
 
 export const defaultConfig: LabelConfig = {
@@ -223,4 +226,7 @@ export const defaultConfig: LabelConfig = {
   precoAntigo: "De: R$ 50,00",
   printerIntensity: 8,
   printerQuantity: 1,
+  printerSpeed: 3,
+  printerMediaType: "W",
+  printerMethod: "T",
 };
