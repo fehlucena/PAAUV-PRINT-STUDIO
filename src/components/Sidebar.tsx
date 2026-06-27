@@ -108,6 +108,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
       console.error(err);
     }
   };
+
+  const handleSaveDefaults = async () => {
+    try {
+      await printerServiceRef.current?.saveDefaults({
+        quantity: config.printerQuantity,
+        intensity: config.printerIntensity,
+        speed: config.printerSpeed,
+        mediaType: config.printerMediaType,
+        method: config.printerMethod,
+        widthMm: config.width,
+        heightMm: config.height,
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const [savedPresets, setSavedPresets] = useState<Record<string, LabelConfig>>(
     {},
   );
@@ -1575,9 +1591,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     CALIBRAR SENSOR
                   </button>
                   <button
+                    onClick={handleSaveDefaults}
+                    disabled={!printerStatus.connected}
+                    className="py-2 bg-slate-100 text-slate-700 rounded text-[10px] font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
+                  >
+                    SALVAR PADRÃO
+                  </button>
+                  <button
                     onClick={handleCancelAll}
                     disabled={!printerStatus.connected}
-                    className="py-2 bg-slate-100 text-rose-700 rounded text-[10px] font-bold hover:bg-rose-50 transition-colors disabled:opacity-50"
+                    className="col-span-2 py-2 bg-slate-100 text-rose-700 rounded text-[10px] font-bold hover:bg-rose-50 transition-colors disabled:opacity-50"
                   >
                     CANCELAR TUDO
                   </button>

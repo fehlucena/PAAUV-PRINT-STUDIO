@@ -523,6 +523,7 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
     return (
       <div
         ref={ref}
+        id="printable-area"
         className="flex bg-white shadow-sm relative"
         style={{ width: `${config.width}mm`, height: `${config.height}mm` }}
       >
@@ -540,7 +541,7 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
         </style>
 
         {Array.from({ length: config.columns }).map((_, i) => (
-          <div key={i} id={i === 0 ? "printable-area" : undefined}>
+          <div key={i}>
             <SingleTag
               config={config}
               isLast={i === config.columns - 1}

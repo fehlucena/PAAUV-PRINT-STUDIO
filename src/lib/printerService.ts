@@ -132,38 +132,41 @@ export class PrinterService {
     this.isPrinting = true;
     this.updateStatus("Processando Etiqueta...", true);
 
-    const originalStyle = element.getAttribute("style");
-
     try {
-      // Force exact dimensions for capture
-      element.style.width = `${options.widthMm}mm`;
-      element.style.height = `${options.heightMm}mm`;
-      element.style.position = "absolute";
-      element.style.left = "0";
-      element.style.top = "0";
-      element.style.zIndex = "-1000";
-      element.style.backgroundColor = "white";
-
       // For L42 Pro 203 DPI, 1mm = 8 dots.
-      const dpiScale = 203 / 96;
+      const targetWidthDots = Math.round(options.widthMm * 8);
+      const targetHeightDots = Math.round(options.heightMm * 8);
+
+      // We use html2canvas to capture. To get 8 dots per mm:
+      // 1mm in CSS is 3.78px. 8 / 3.78 = 2.1166...
+      const dpiScale = 8 / (96 / 25.4);
 
       const canvas = await html2canvas(element, {
         scale: dpiScale,
         backgroundColor: "#ffffff",
         logging: false,
         useCORS: true,
-        width: options.widthMm * 3.7795275591, // mm to pixels at 96 DPI
-        height: options.heightMm * 3.7795275591,
+        width: options.widthMm * 3.7795275591, // Width in CSS pixels
+        height: options.heightMm * 3.7795275591, // Height in CSS pixels
+        onclone: (clonedDoc) => {
+          const clonedElement = clonedDoc.getElementById(elementId);
+          if (clonedElement) {
+            clonedElement.style.width = `${options.widthMm}mm`;
+            clonedElement.style.height = `${options.heightMm}mm`;
+            clonedElement.style.margin = "0";
+            clonedElement.style.padding = "0";
+            clonedElement.style.display = "flex";
+            clonedElement.style.position = "static";
+          }
+        }
       });
-
-      // Restore style
-      if (originalStyle) element.setAttribute("style", originalStyle);
-      else element.removeAttribute("style");
 
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) throw new Error("Falha ao obter contexto do canvas.");
 
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      // Ensure dimensions are exactly what the printer expects (mm * 8)
+      // Sometimes html2canvas might be off by a pixel due to rounding
+      const imgData = ctx.getImageData(0, 0, targetWidthDots, targetHeightDots);
       const { hex, width, height } = this.applyDitheringAndGenerateHex(imgData);
       
       const rowBytes = Math.ceil(width / 8);
@@ -187,10 +190,6 @@ export class PrinterService {
       
       this.updateStatus("Concluído!");
     } catch (err: any) {
-      // Restore style if error
-      if (originalStyle) element.setAttribute("style", originalStyle);
-      else element.removeAttribute("style");
-      
       this.updateStatus(`Erro na impressão: ${err.message}`);
       throw err;
     } finally {
@@ -204,6 +203,15 @@ export class PrinterService {
     const data = new TextEncoder().encode(zpl);
     await this.device.transferOut(1, data);
     this.updateStatus("Comando de calibração enviado.");
+  }
+
+  async saveDefaults(options: PrintOptions) {
+    if (!this.device?.opened) throw new Error("Conecte a impressora primeiro.");
+    // ^JUS saves the current settings to non-volatile memory
+    const zpl = `^XA~SD${options.intensity}^PR${options.speed}^MT${options.method}^JUS^XZ`;
+    const data = new TextEncoder().encode(zpl);
+    await this.device.transferOut(1, data);
+    this.updateStatus("Configurações gravadas como padrão.");
   }
 
   async cancelAll() {
