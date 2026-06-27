@@ -128,6 +128,9 @@ export interface LabelConfig {
   precoAntigo: string;
   // Canvas Editor
   isCanvaOpen?: boolean;
+  // Printer
+  printerIntensity: number;
+  printerQuantity: number;
 }
 
 export const defaultConfig: LabelConfig = {
@@ -218,4 +221,6 @@ export const defaultConfig: LabelConfig = {
   isPromo: false,
   promoText: "PROMOÇÃO",
   precoAntigo: "De: R$ 50,00",
+  printerIntensity: 8,
+  printerQuantity: 1,
 };

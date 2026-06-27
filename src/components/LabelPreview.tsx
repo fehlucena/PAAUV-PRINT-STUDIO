@@ -10,28 +10,60 @@ interface LabelPreviewProps {
 }
 
 const SafeBarcode = ({ value, format }: { value: string; format: string }) => {
-  // Try to render barcode. Some formats like EAN13 require exactly 13 chars.
-  // If invalid, we show a fallback. react-barcode handles errors internally but sometimes throws.
+  // Try to render barcode.
   try {
+    if (!value) return null;
+
     let validValue = value;
-    if (format === "EAN13" && value.length !== 12 && value.length !== 13) {
-      return (
-        <div className="text-[10px] text-red-500 font-bold bg-red-50 p-1 border border-red-200">
-          EAN-13 inválido (12-13 dígitos)
-        </div>
-      );
-    }
-    if (format === "UPC" && value.length !== 11 && value.length !== 12) {
-      return (
-        <div className="text-[10px] text-red-500 font-bold bg-red-50 p-1 border border-red-200">
-          UPC-A inválido (11-12 dígitos)
-        </div>
-      );
+    
+    // Validation for specific formats
+    if (format === "EAN13") {
+      // Remove non-digits
+      validValue = value.replace(/\D/g, "");
+      if (validValue.length < 12) {
+        return (
+          <div className="text-[9px] text-red-500 font-bold bg-red-50 p-1 border border-red-100 rounded leading-tight">
+            EAN-13 precisa de 12-13 dígitos
+          </div>
+        );
+      }
+      // Trim to max 13
+      validValue = validValue.slice(0, 13);
+    } else if (format === "UPC") {
+      validValue = value.replace(/\D/g, "");
+      if (validValue.length < 11) {
+        return (
+          <div className="text-[9px] text-red-500 font-bold bg-red-50 p-1 border border-red-100 rounded leading-tight">
+            UPC precisa de 11-12 dígitos
+          </div>
+        );
+      }
+      validValue = validValue.slice(0, 12);
+    } else if (format === "EAN8") {
+      validValue = value.replace(/\D/g, "");
+      if (validValue.length < 7) {
+        return (
+          <div className="text-[9px] text-red-500 font-bold bg-red-50 p-1 border border-red-100 rounded leading-tight">
+            EAN-8 precisa de 7-8 dígitos
+          </div>
+        );
+      }
+      validValue = validValue.slice(0, 8);
+    } else if (format === "CODE39") {
+      // CODE39 can be alphanumeric but has specific valid characters
+      validValue = value.toUpperCase().replace(/[^A-Z0-9\-\.\ \$\/\+\%]/g, "");
+      if (!validValue) {
+        return (
+          <div className="text-[9px] text-red-500 font-bold bg-red-50 p-1 border border-red-100 rounded leading-tight">
+            Código 39 inválido
+          </div>
+        );
+      }
     }
 
     return (
       <Barcode
-        value={validValue || "000"}
+        value={validValue}
         format={format as any}
         renderer="svg"
         width={1.5}
@@ -43,7 +75,12 @@ const SafeBarcode = ({ value, format }: { value: string; format: string }) => {
       />
     );
   } catch (e) {
-    return <div className="text-[9px] text-red-500">Erro na Simbologia</div>;
+    console.error("Barcode Render Error:", e);
+    return (
+      <div className="text-[8px] text-red-500 bg-red-50 p-1 border border-red-100 rounded">
+        Erro de Simbologia
+      </div>
+    );
   }
 };
 
@@ -503,13 +540,14 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
         </style>
 
         {Array.from({ length: config.columns }).map((_, i) => (
-          <SingleTag
-            key={i}
-            config={config}
-            isLast={i === config.columns - 1}
-            colWidth={colWidth}
-            updateConfig={updateConfig}
-          />
+          <div key={i} id={i === 0 ? "printable-area" : undefined}>
+            <SingleTag
+              config={config}
+              isLast={i === config.columns - 1}
+              colWidth={colWidth}
+              updateConfig={updateConfig}
+            />
+          </div>
         ))}
       </div>
     );
