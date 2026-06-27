@@ -1,11 +1,5 @@
 import html2canvas from "html2canvas";
 
-// JK01 / V5X BLE Printer Protocol
-const SERVICE_UUID = "0000ae30-0000-1000-8000-00805f9b34fb";
-const NOTIFY_UUID = "0000ae02-0000-1000-8000-00805f9b34fb";
-const CMD_UUID = "0000ae01-0000-1000-8000-00805f9b34fb";
-const DATA_UUID = "0000ae03-0000-1000-8000-00805f9b34fb";
-
 export interface PrinterStatus {
   connected: boolean;
   isPrinting: boolean;
@@ -14,12 +8,7 @@ export interface PrinterStatus {
 }
 
 export class PrinterService {
-  private device: BluetoothDevice | null = null;
-  private server: BluetoothRemoteGATTServer | null = null;
-  private cmdChar: BluetoothRemoteGATTCharacteristic | null = null;
-  private dataChar: BluetoothRemoteGATTCharacteristic | null = null;
-  private notifyChar: BluetoothRemoteGATTCharacteristic | null = null;
-  private canWrite = true;
+  private device: USBDevice | null = null;
   private isPrinting = false;
 
   constructor(private onStatusUpdate: (status: PrinterStatus) => void) {}
@@ -27,54 +16,40 @@ export class PrinterService {
   private updateStatus(message: string, isPrinting = false) {
     this.isPrinting = isPrinting;
     this.onStatusUpdate({
-      connected: !!this.server?.connected,
+      connected: !!this.device?.opened,
       isPrinting: this.isPrinting,
       statusMessage: message,
-      deviceName: this.device?.name,
+      deviceName: this.device?.productName || "Impressora USB",
     });
   }
 
   async connect() {
-    if (!navigator.bluetooth) {
-      throw new Error("Web Bluetooth não suportado neste navegador.");
+    if (!navigator.usb) {
+      throw new Error("WebUSB não suportado neste navegador. Use Chrome ou Edge.");
     }
 
     try {
-      this.updateStatus("Buscando impressora...");
-      this.device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: "JK" }, { namePrefix: "TP" }],
-        optionalServices: [SERVICE_UUID],
-      });
+      this.updateStatus("Buscando impressora USB...");
+      // For Elgin L42 Pro, we can use empty filters to let the user select, 
+      // or specific vendorId/productId if known.
+      this.device = await navigator.usb.requestDevice({ filters: [] });
 
-      this.updateStatus("Conectando...");
-      this.server = await this.device.gatt?.connect() || null;
-      if (!this.server) throw new Error("Falha ao conectar ao servidor GATT.");
-
-      const service = await this.server.getPrimaryService(SERVICE_UUID);
-      this.cmdChar = await service.getCharacteristic(CMD_UUID);
-      this.dataChar = await service.getCharacteristic(DATA_UUID);
-      this.notifyChar = await service.getCharacteristic(NOTIFY_UUID);
-
-      await this.notifyChar.startNotifications();
-      this.notifyChar.addEventListener("characteristicvaluechanged", (e: any) => {
-        const hex = Array.from(new Uint8Array(e.target.value.buffer))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-        if (hex === "aa01") {
-          this.canWrite = false;
-          console.log("PAUSE");
-        }
-        if (hex === "aa00") {
-          this.canWrite = true;
-          console.log("RESUME");
-        }
-      });
-
-      this.device.addEventListener("gattserverdisconnected", () => {
-        this.updateStatus("Desconectado");
-      });
+      await this.device.open();
+      if (this.device.configuration === null) {
+        await this.device.selectConfiguration(1);
+      }
+      await this.device.claimInterface(0);
 
       this.updateStatus("Conectado");
+      
+      // Listen for disconnection
+      navigator.usb.addEventListener("disconnect", (event) => {
+        if (event.device === this.device) {
+          this.device = null;
+          this.updateStatus("Desconectado");
+        }
+      });
+
     } catch (err: any) {
       this.updateStatus(`Erro: ${err.message}`);
       throw err;
@@ -82,29 +57,54 @@ export class PrinterService {
   }
 
   async disconnect() {
-    if (this.server?.connected) {
-      this.server.disconnect();
+    if (this.device?.opened) {
+      await this.device.close();
     }
     this.device = null;
-    this.server = null;
     this.updateStatus("Desconectado");
   }
 
-  async print(elementId: string, quantity: number = 1, intensity: number = 1) {
-    if (!this.server?.connected || !this.cmdChar || !this.dataChar) {
-      throw new Error("Impressora não conectada.");
+  private generateZPLHex(imageData: ImageData): string {
+    const w = imageData.width;
+    const h = imageData.height;
+    const d = imageData.data;
+    const rowBytes = Math.ceil(w / 8);
+    let hexString = "";
+
+    for (let y = 0; y < h; y++) {
+      for (let b = 0; b < rowBytes; b++) {
+        let byteValue = 0;
+        for (let bit = 0; bit < 8; bit++) {
+          const x = b * 8 + bit;
+          if (x < w) {
+            const idx = (y * w + x) * 4;
+            // Grayscale threshold: Black if R < 128. ZPL: Black = 1, White = 0.
+            const gray = (d[idx] + d[idx + 1] + d[idx + 2]) / 3;
+            if (gray < 128) {
+              byteValue |= (1 << (7 - bit));
+            }
+          }
+        }
+        hexString += byteValue.toString(16).padStart(2, "0").toUpperCase();
+      }
+    }
+    return hexString;
+  }
+
+  async print(elementId: string, quantity: number = 1, intensity: number = 10) {
+    if (!this.device?.opened) {
+      throw new Error("Impressora não conectada via USB.");
     }
 
     const element = document.getElementById(elementId);
     if (!element) throw new Error("Elemento de impressão não encontrado.");
 
     this.isPrinting = true;
-    this.updateStatus("Processando Imagem...", true);
+    this.updateStatus("Processando Etiqueta...", true);
 
     try {
       const canvas = await html2canvas(element, {
-        scale: 1,
-        width: 384,
+        scale: 2, // Higher scale for better definition on 203 DPI
         backgroundColor: "#ffffff",
       });
 
@@ -112,89 +112,31 @@ export class PrinterService {
       if (!ctx) throw new Error("Falha ao obter contexto do canvas.");
 
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const width = canvas.width;
-      const height = canvas.height;
-      const bytesPerRow = width / 8; // 48 bytes for 384 pixels
+      const hexImage = this.generateZPLHex(imgData);
       
-      const bitmap = new Uint8Array(height * bytesPerRow);
-      const pixels = new Float32Array(width * height);
+      const rowBytes = Math.ceil(imgData.width / 8);
+      const byteCount = rowBytes * imgData.height;
+      const printWidthDots = imgData.width;
 
-      // Convert to grayscale
-      for (let i = 0; i < width * height; i++) {
-        pixels[i] = (imgData.data[i * 4] + imgData.data[i * 4 + 1] + imgData.data[i * 4 + 2]) / 3;
-      }
+      // ZPL Template for L42 PRO
+      // ~SD: Darkness (0-30 for ZPL, L42 Pro usually maps 0-15)
+      // ^PW: Print Width
+      // ^LL: Label Length
+      // ^GFA: Graphic Field (A = ASCII hex)
+      const zpl = `^XA~SD${intensity}
+^PW${printWidthDots}^LL${imgData.height}^FWN
+^FO0,0^GFA,${byteCount},${byteCount},${rowBytes},${hexImage}
+^PQ${quantity}
+^XZ`;
 
-      // Floyd-Steinberg Dithering + LSB Bitmap mapping
-      for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-          const idx = y * width + x;
-          const oldPixel = pixels[idx];
-          const newPixel = oldPixel < 128 ? 0 : 255;
-          pixels[idx] = newPixel;
-          const err = (oldPixel - newPixel) / 16;
-          
-          if (x + 1 < width) pixels[idx + 1] += err * 7;
-          if (y + 1 < height) {
-            if (x > 0) pixels[idx + width - 1] += err * 3;
-            pixels[idx + width] += err * 5;
-            if (x + 1 < width) pixels[idx + width + 1] += err * 1;
-          }
-          
-          if (newPixel === 0) {
-            const byte = (y * bytesPerRow) + Math.floor(x / 8);
-            bitmap[byte] |= (1 << (x % 8)); // LSB First
-          }
-        }
-      }
-
-      const spacingRows = 12;
-      const totalHeight = (height * quantity) + (spacingRows * (quantity - 1));
-      const longBitmap = new Uint8Array(totalHeight * bytesPerRow);
-
-      for (let q = 0; q < quantity; q++) {
-        const offset = q * (height + spacingRows) * bytesPerRow;
-        longBitmap.set(bitmap, offset);
-      }
-
-      this.updateStatus("Iniciando Impressão...", true);
-
-      // 1. Handshake A7 (Init)
-      await this.cmdChar.writeValueWithoutResponse(new Uint8Array([0x22, 0x21, 0xa7, 0x00, 0x00, 0x00, 0x00, 0x00]));
-      await new Promise((r) => setTimeout(r, 600));
-
-      // 2. Handshake A9 (Label Setup)
-      const finalHL = totalHeight & 0xff;
-      const finalHH = (totalHeight >> 8) & 0xff;
-      const intensityByte = intensity & 0x0f;
-      const a9 = new Uint8Array([0x22, 0x21, 0xa9, 0x00, intensityByte, 0x00, finalHH, finalHL, 0x30, 0x01, 0x00, 0x00]);
-      await this.cmdChar.writeValueWithoutResponse(a9);
-      await new Promise((r) => setTimeout(r, 600));
-
-      // 3. Data Transmission (AE03)
-      const CHUNK_SIZE = 48;
-      for (let i = 0; i < longBitmap.length; i += CHUNK_SIZE) {
-        if (!this.isPrinting) break;
-
-        while (!this.canWrite) await new Promise((r) => setTimeout(r, 50));
-
-        const chunk = longBitmap.slice(i, i + CHUNK_SIZE);
-        await this.dataChar.writeValueWithoutResponse(chunk);
-
-        if (i % 480 === 0) {
-          this.updateStatus(`Transmitindo: ${Math.round((i / longBitmap.length) * 100)}%`, true);
-        }
-        await new Promise((r) => setTimeout(r, 40)); // Throttle
-      }
-
-      // 4. Finish AD
-      if (this.isPrinting) {
-        this.updateStatus("Finalizando...", true);
-        await new Promise((r) => setTimeout(r, 600));
-        await this.cmdChar.writeValueWithoutResponse(new Uint8Array([0x22, 0x21, 0xad, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00]));
-        this.updateStatus("Concluído!");
-      } else {
-        this.updateStatus("Impressão cancelada.");
-      }
+      this.updateStatus("Transmitindo para USB...", true);
+      const encoder = new TextEncoder();
+      const data = encoder.encode(zpl);
+      
+      // Standard USB bulk transfer on endpoint 1
+      await this.device.transferOut(1, data);
+      
+      this.updateStatus("Concluído!");
     } catch (err: any) {
       this.updateStatus(`Erro na impressão: ${err.message}`);
       throw err;

@@ -1431,12 +1431,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
           <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <div>
               <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-                Conexão Bluetooth
+                Conexão USB (L42 PRO)
               </h3>
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-slate-700">Status</span>
+                    <span className="text-xs font-semibold text-slate-700">Status USB</span>
                     <span className={`text-[10px] font-bold ${printerStatus.connected ? "text-green-600" : "text-slate-500"}`}>
                       {printerStatus.connected ? `Conectado: ${printerStatus.deviceName}` : "Desconectado"}
                     </span>
@@ -1454,7 +1454,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                     className="w-full py-2.5 bg-rose-900 text-white rounded-lg text-xs font-bold hover:bg-rose-950 transition-colors flex items-center justify-center gap-2"
                   >
                     <RefreshCcw size={14} />
-                    CONECTAR IMPRESSORA
+                    CONECTAR VIA USB
                   </button>
                 ) : (
                   <button
