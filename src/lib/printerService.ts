@@ -13,6 +13,8 @@ export interface PrintOptions {
   speed: number;
   mediaType: "W" | "M" | "C";
   method: "T" | "D";
+  widthMm: number;
+  heightMm: number;
 }
 
 export class PrinterService {
@@ -130,17 +132,33 @@ export class PrinterService {
     this.isPrinting = true;
     this.updateStatus("Processando Etiqueta...", true);
 
+    const originalStyle = element.getAttribute("style");
+
     try {
+      // Force exact dimensions for capture
+      element.style.width = `${options.widthMm}mm`;
+      element.style.height = `${options.heightMm}mm`;
+      element.style.position = "absolute";
+      element.style.left = "0";
+      element.style.top = "0";
+      element.style.zIndex = "-1000";
+      element.style.backgroundColor = "white";
+
       // For L42 Pro 203 DPI, 1mm = 8 dots.
-      // 96 DPI is the standard web resolution. 203 / 96 = ~2.1146
       const dpiScale = 203 / 96;
 
       const canvas = await html2canvas(element, {
-        scale: dpiScale, 
+        scale: dpiScale,
         backgroundColor: "#ffffff",
         logging: false,
         useCORS: true,
+        width: options.widthMm * 3.7795275591, // mm to pixels at 96 DPI
+        height: options.heightMm * 3.7795275591,
       });
+
+      // Restore style
+      if (originalStyle) element.setAttribute("style", originalStyle);
+      else element.removeAttribute("style");
 
       const ctx = canvas.getContext("2d", { willReadFrequently: true });
       if (!ctx) throw new Error("Falha ao obter contexto do canvas.");
@@ -169,6 +187,10 @@ export class PrinterService {
       
       this.updateStatus("Concluído!");
     } catch (err: any) {
+      // Restore style if error
+      if (originalStyle) element.setAttribute("style", originalStyle);
+      else element.removeAttribute("style");
+      
       this.updateStatus(`Erro na impressão: ${err.message}`);
       throw err;
     } finally {

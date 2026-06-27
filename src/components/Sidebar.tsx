@@ -85,6 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
         speed: config.printerSpeed,
         mediaType: config.printerMediaType,
         method: config.printerMethod,
+        widthMm: config.width,
+        heightMm: config.height,
       });
     } catch (err) {
       console.error(err);
