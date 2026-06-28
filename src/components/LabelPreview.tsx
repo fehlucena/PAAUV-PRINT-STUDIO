@@ -525,7 +525,11 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
         ref={ref}
         id="printable-area"
         className="flex bg-white shadow-sm relative"
-        style={{ width: `${config.width}mm`, height: `${config.height}mm` }}
+        style={{
+          width: `${config.width}mm`,
+          height: `${config.height}mm`,
+          overflow: "hidden",
+        }}
       >
         {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}
         <style>

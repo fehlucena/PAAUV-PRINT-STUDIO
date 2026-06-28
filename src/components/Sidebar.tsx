@@ -85,6 +85,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
         speed: config.printerSpeed,
         mediaType: config.printerMediaType,
         method: config.printerMethod,
+        orientation: config.printerOrientation,
+        dithering: config.printerDithering,
         widthMm: config.width,
         heightMm: config.height,
       });
@@ -117,6 +119,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
         speed: config.printerSpeed,
         mediaType: config.printerMediaType,
         method: config.printerMethod,
+        orientation: config.printerOrientation,
+        dithering: config.printerDithering,
         widthMm: config.width,
         heightMm: config.height,
       });
@@ -1578,6 +1582,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                       <option value="W">Web (Intervalos)</option>
                       <option value="M">Marcas Pretas</option>
                       <option value="C">Contínuo</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Orientação</label>
+                    <select
+                      value={config.printerOrientation}
+                      onChange={(e) => updateConfig("printerOrientation", e.target.value as "N" | "R")}
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
+                    >
+                      <option value="N">Retrato</option>
+                      <option value="R">Paisagem</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-semibold text-slate-700">Pontilhado</label>
+                    <select
+                      value={config.printerDithering ? "true" : "false"}
+                      onChange={(e) => updateConfig("printerDithering", e.target.value === "true")}
+                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
+                    >
+                      <option value="false">Desligado</option>
+                      <option value="true">Ligado (Floyd)</option>
                     </select>
                   </div>
                 </div>

@@ -134,6 +134,8 @@ export interface LabelConfig {
   printerSpeed: number;
   printerMediaType: "W" | "M" | "C";
   printerMethod: "T" | "D";
+  printerOrientation: "N" | "R";
+  printerDithering: boolean;
 }
 
 export const defaultConfig: LabelConfig = {
@@ -229,4 +231,6 @@ export const defaultConfig: LabelConfig = {
   printerSpeed: 3,
   printerMediaType: "W",
   printerMethod: "T",
+  printerOrientation: "N",
+  printerDithering: false,
 };
