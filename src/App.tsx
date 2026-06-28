@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { TopBar } from "./components/TopBar";
 import { LabelPreview } from "./components/LabelPreview";
@@ -8,12 +8,55 @@ import { useAuth } from "./lib/AuthContext";
 import { Login } from "./components/Login";
 import { AdminPanel } from "./components/AdminPanel";
 import { Loader2 } from "lucide-react";
+import {
+  tryAutoReconnect,
+  requestAndConnectPrinter,
+  printLabelViaUsb,
+  isPrinterConnected,
+} from "./lib/usbPrinter";
 
 export default function App() {
   const { user, loading } = useAuth();
   const [showAdmin, setShowAdmin] = useState(false);
   const [config, setConfig] = useState<LabelConfig>(defaultConfig);
   const [zoom, setZoom] = useState(1.2);
+
+  // --- Impressão USB direta (WebUSB + ZPL) -------------------------------
+  const usbCaptureRef = useRef<HTMLDivElement>(null);
+  const [usbConnected, setUsbConnected] = useState(false);
+  const [usbBusy, setUsbBusy] = useState(false);
+
+  useEffect(() => {
+    // Tenta reconectar silenciosamente a uma impressora já autorizada em
+    // uma sessão anterior neste mesmo computador/navegador.
+    tryAutoReconnect().then((connected) => setUsbConnected(connected));
+  }, []);
+
+  const handleConnectUsb = async () => {
+    try {
+      await requestAndConnectPrinter();
+      setUsbConnected(isPrinterConnected());
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Não foi possível conectar à impressora USB.");
+    }
+  };
+
+  const handlePrintUsb = async () => {
+    if (!usbCaptureRef.current) return;
+    setUsbBusy(true);
+    try {
+      await printLabelViaUsb({
+        node: usbCaptureRef.current,
+        widthMm: config.width,
+        heightMm: config.height,
+      });
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Falha ao imprimir via USB.");
+      setUsbConnected(isPrinterConnected());
+    } finally {
+      setUsbBusy(false);
+    }
+  };
 
   useEffect(() => {
     const fetchDefaultPreset = async () => {
@@ -72,6 +115,10 @@ export default function App() {
           setConfig={setConfig}
           onPrint={handlePrint}
           onOpenAdmin={() => setShowAdmin(true)}
+          usbConnected={usbConnected}
+          onConnectUsb={handleConnectUsb}
+          onPrintUsb={handlePrintUsb}
+          usbBusy={usbBusy}
         />
 
         <div className="flex flex-1 overflow-hidden">
@@ -106,8 +153,24 @@ export default function App() {
         </div>
       </div>
 
-      {/* PRINT ONLY CONTAINER */}
+      {/* PRINT ONLY CONTAINER (usado pelo window.print / impressão pelo navegador) */}
       <div className="hidden print:block m-0 p-0 bg-white font-sans text-black">
+        <LabelPreview config={config} />
+      </div>
+
+      {/*
+        CONTAINER DE CAPTURA USB
+        Fica permanentemente fora da área visível da tela (não usa display:none,
+        pois precisa ter layout/dimensões reais para o html-to-image conseguir
+        "fotografar" a etiqueta). É escondido explicitamente durante a
+        impressão pelo navegador (print:hidden) para nunca aparecer no papel.
+      */}
+      <div
+        ref={usbCaptureRef}
+        className="print:hidden"
+        style={{ position: "fixed", top: 0, left: "-99999px" }}
+        aria-hidden="true"
+      >
         <LabelPreview config={config} />
       </div>
     </>
