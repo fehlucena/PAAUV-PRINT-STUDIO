@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { LabelConfig, LabelDetail, CustomElement } from "../types";
 import {
   ChevronDown,
@@ -19,11 +19,12 @@ import {
   Star,
   Edit2,
   Printer,
-  RefreshCcw,
+  RefreshCw,
+  Zap,
 } from "lucide-react";
 import { loadPresetsFromDB, savePresetsToDB, saveDefaultPresetToDB } from "../lib/presets";
 import { useAuth } from "../lib/AuthContext";
-import { PrinterService, PrinterStatus } from "../lib/printerService";
+import { printerService } from "../lib/printerService";
 
 interface SidebarProps {
   config: LabelConfig;
@@ -54,78 +55,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
   const [activeTab, setActiveTab] = useState<
     "layout" | "content" | "barcode" | "price" | "printer"
   >("layout");
-
-  const [printerStatus, setPrinterStatus] = useState<PrinterStatus>({
-    connected: false,
-    isPrinting: false,
-    statusMessage: "Impressora não conectada",
-  });
-  const printerServiceRef = useRef<PrinterService | null>(null);
+  const [printerStatus, setPrinterStatus] = useState<string | null>(null);
+  const [printCopies, setPrintCopies] = useState(1);
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [showNetworkConfig, setShowNetworkConfig] = useState(false);
+  const [netConfig, setNetConfig] = useState({ dhcp: true, ip: "", mask: "", gateway: "" });
 
   useEffect(() => {
-    printerServiceRef.current = new PrinterService(setPrinterStatus);
-    return () => {
-      printerServiceRef.current?.disconnect();
+    const checkPrinter = async () => {
+      const name = await printerService.autoConnect();
+      if (name) setPrinterStatus(name);
     };
+    checkPrinter();
   }, []);
 
-  const handlePrinterConnect = async () => {
+  const handleConnectPrinter = async () => {
     try {
-      await printerServiceRef.current?.connect();
-    } catch (err) {
-      console.error(err);
+      const name = await printerService.requestConnection();
+      setPrinterStatus(name);
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
   const handlePrint = async () => {
-    try {
-      await printerServiceRef.current?.print("printable-area", {
-        quantity: config.printerQuantity,
-        intensity: config.printerIntensity,
-        speed: config.printerSpeed,
-        mediaType: config.printerMediaType,
-        method: config.printerMethod,
-        orientation: config.printerOrientation,
-        dithering: config.printerDithering,
-        widthMm: config.width,
-        heightMm: config.height,
-      });
-    } catch (err) {
-      console.error(err);
+    if (!printerStatus) {
+      alert("Por favor, conecte a impressora primeiro na aba Impressora.");
+      setActiveTab("printer");
+      return;
     }
-  };
-
-  const handleCalibrate = async () => {
+    setIsPrinting(true);
     try {
-      await printerServiceRef.current?.calibrate();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleCancelAll = async () => {
-    try {
-      await printerServiceRef.current?.cancelAll();
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleSaveDefaults = async () => {
-    try {
-      await printerServiceRef.current?.saveDefaults({
-        quantity: config.printerQuantity,
-        intensity: config.printerIntensity,
-        speed: config.printerSpeed,
-        mediaType: config.printerMediaType,
-        method: config.printerMethod,
-        orientation: config.printerOrientation,
-        dithering: config.printerDithering,
-        widthMm: config.width,
-        heightMm: config.height,
-      });
-    } catch (err) {
-      console.error(err);
+      await printerService.print(config, printCopies);
+    } catch (err: any) {
+      alert("Erro ao imprimir: " + err.message);
+    } finally {
+      setIsPrinting(false);
     }
   };
   const [savedPresets, setSavedPresets] = useState<Record<string, LabelConfig>>(
@@ -1466,210 +1431,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
           </div>
         )}
 
-        {/* TAB: PRINTER */}
-        {activeTab === "printer" && (
-          <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <div>
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-                Conexão USB (L42 PRO)
-              </h3>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold text-slate-700">Status USB</span>
-                    <span className={`text-[10px] font-bold ${printerStatus.connected ? "text-green-600" : "text-slate-500"}`}>
-                      {printerStatus.connected ? `Conectado: ${printerStatus.deviceName}` : "Desconectado"}
-                    </span>
-                  </div>
-                  <div className={`w-2 h-2 rounded-full ${printerStatus.connected ? "bg-green-500 animate-pulse" : "bg-slate-300"}`} />
-                </div>
-
-                <div className="text-[10px] bg-white p-2 rounded border border-slate-200 font-mono text-slate-500 min-h-[40px] flex items-center">
-                  {printerStatus.statusMessage}
-                </div>
-
-                {!printerStatus.connected ? (
-                  <button
-                    onClick={handlePrinterConnect}
-                    className="w-full py-2.5 bg-rose-900 text-white rounded-lg text-xs font-bold hover:bg-rose-950 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <RefreshCcw size={14} />
-                    CONECTAR VIA USB
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => printerServiceRef.current?.disconnect()}
-                    className="w-full py-2.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-bold hover:bg-slate-300 transition-colors"
-                  >
-                    DESCONECTAR
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
-                Configurações de Impressão
-              </h3>
-              <div className="flex flex-col gap-4 p-3 bg-slate-50 rounded-md border border-slate-200">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-slate-700">Intensidade (Contraste)</label>
-                    <span className="text-[10px] font-mono bg-slate-200 px-1.5 py-0.5 rounded text-slate-700">
-                      {config.printerIntensity}
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="1"
-                    max="15"
-                    value={config.printerIntensity}
-                    onChange={(e) => updateConfig("printerIntensity", Number(e.target.value))}
-                    className="w-full accent-rose-900"
-                  />
-                  <div className="flex justify-between text-[8px] text-slate-400 font-bold uppercase">
-                    <span>Claro</span>
-                    <span>Padrão</span>
-                    <span>Escuro</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Velocidade</label>
-                    <select
-                      value={config.printerSpeed}
-                      onChange={(e) => updateConfig("printerSpeed", Number(e.target.value))}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                    >
-                      <option value={1}>1 (Lenta)</option>
-                      <option value={2}>2 (Normal)</option>
-                      <option value={3}>3 (Rápida)</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Quantidade</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="50"
-                      value={config.printerQuantity}
-                      onChange={(e) => updateConfig("printerQuantity", Number(e.target.value))}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Método</label>
-                    <select
-                      value={config.printerMethod}
-                      onChange={(e) => updateConfig("printerMethod", e.target.value)}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                    >
-                      <option value="T">Transf. Térmica</option>
-                      <option value="D">Térmica Direta</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Tipo Mídia</label>
-                    <select
-                      value={config.printerMediaType}
-                      onChange={(e) => updateConfig("printerMediaType", e.target.value)}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                    >
-                      <option value="W">Web (Intervalos)</option>
-                      <option value="M">Marcas Pretas</option>
-                      <option value="C">Contínuo</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Orientação</label>
-                    <select
-                      value={config.printerOrientation}
-                      onChange={(e) => updateConfig("printerOrientation", e.target.value as "N" | "R")}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                    >
-                      <option value="N">Retrato</option>
-                      <option value="R">Paisagem</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Pontilhado</label>
-                    <select
-                      value={config.printerDithering ? "true" : "false"}
-                      onChange={(e) => updateConfig("printerDithering", e.target.value === "true")}
-                      className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs w-full outline-none focus:border-rose-900"
-                    >
-                      <option value="false">Desligado</option>
-                      <option value="true">Ligado (Floyd)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
-                  <button
-                    onClick={handleCalibrate}
-                    disabled={!printerStatus.connected}
-                    className="py-2 bg-slate-100 text-slate-700 rounded text-[10px] font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
-                  >
-                    CALIBRAR SENSOR
-                  </button>
-                  <button
-                    onClick={handleSaveDefaults}
-                    disabled={!printerStatus.connected}
-                    className="py-2 bg-slate-100 text-slate-700 rounded text-[10px] font-bold hover:bg-slate-200 transition-colors disabled:opacity-50"
-                  >
-                    SALVAR PADRÃO
-                  </button>
-                  <button
-                    onClick={handleCancelAll}
-                    disabled={!printerStatus.connected}
-                    className="col-span-2 py-2 bg-slate-100 text-rose-700 rounded text-[10px] font-bold hover:bg-rose-50 transition-colors disabled:opacity-50"
-                  >
-                    CANCELAR TUDO
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-4 mt-auto">
-              <button
-                disabled={!printerStatus.connected || printerStatus.isPrinting}
-                onClick={handlePrint}
-                className={`w-full py-4 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-3 shadow-lg ${
-                  printerStatus.connected && !printerStatus.isPrinting
-                    ? "bg-rose-900 text-white hover:bg-rose-950 transform hover:-translate-y-0.5 active:translate-y-0"
-                    : "bg-slate-200 text-slate-400 cursor-not-allowed"
-                }`}
-              >
-                {printerStatus.isPrinting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-slate-400 border-t-white rounded-full animate-spin" />
-                    IMPRIMINDO...
-                  </>
-                ) : (
-                  <>
-                    <Printer size={20} />
-                    IMPRIMIR ETIQUETA
-                  </>
-                )}
-              </button>
-              {printerStatus.isPrinting && (
-                <button
-                  onClick={() => printerServiceRef.current?.cancelPrint()}
-                  className="w-full mt-2 text-xs text-rose-600 font-bold hover:underline"
-                >
-                  Cancelar Impressão
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+        {/* TAB: PRICE */}
         {activeTab === "price" && config.labelType === "retail" && (
           <div className="flex flex-col gap-5 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1799,6 +1561,265 @@ export const Sidebar: React.FC<SidebarProps> = ({ config, setConfig }) => {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* TAB: PRINTER */}
+        {activeTab === "printer" && (
+          <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <div>
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                Conexão USB (WebUSB)
+              </h3>
+              <div className="flex flex-col gap-3 p-4 bg-slate-50 rounded-md border border-slate-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-700">Status</span>
+                    <span className={`text-[10px] font-bold ${printerStatus ? "text-green-600" : "text-amber-600"}`}>
+                      {printerStatus ? `Conectado: ${printerStatus}` : "Desconectado"}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleConnectPrinter}
+                    className="px-3 py-1.5 bg-slate-800 text-white text-[11px] font-bold rounded-md hover:bg-slate-900 transition-colors flex items-center gap-1.5"
+                  >
+                    <RefreshCw size={12} className={!printerStatus ? "animate-spin" : ""} />
+                    Conectar
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-3">
+                Configurações da L42 PRO
+              </h3>
+              <div className="flex flex-col gap-4 p-4 bg-slate-50 rounded-md border border-slate-200">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Intensidade (0-15)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="15"
+                      value={config.printerDarkness}
+                      onChange={(e) => updateConfig("printerDarkness", Number(e.target.value))}
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs outline-none focus:border-rose-900"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Velocidade (1-3)</label>
+                    <select
+                      value={config.printerSpeed}
+                      onChange={(e) => updateConfig("printerSpeed", Number(e.target.value))}
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs outline-none focus:border-rose-900"
+                    >
+                      <option value={1}>10.6 mm/s (Lenta)</option>
+                      <option value={2}>50.8 mm/s (Normal)</option>
+                      <option value={3}>76.2 mm/s (Rápida)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Método de Impressão</label>
+                  <select
+                    value={config.printerMethod}
+                    onChange={(e) => updateConfig("printerMethod", e.target.value)}
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs outline-none focus:border-rose-900"
+                  >
+                    <option value="T">Transferência Térmica (Com Ribbon)</option>
+                    <option value="D">Térmica Direta (Sem Ribbon)</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Tipo de Mídia</label>
+                  <select
+                    value={config.printerMediaType}
+                    onChange={(e) => updateConfig("printerMediaType", e.target.value)}
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-xs outline-none focus:border-rose-900"
+                  >
+                    <option value="W">Etiquetas com GAP (Intervalos)</option>
+                    <option value="M">Marcas Pretas</option>
+                    <option value="C">Contínuo</option>
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Orientação</label>
+                    <select
+                      value={config.printerOrientation}
+                      onChange={(e) => updateConfig("printerOrientation", e.target.value)}
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs outline-none focus:border-rose-900"
+                    >
+                      <option value="N">Retrato (Normal)</option>
+                      <option value="R">Paisagem (Rotacionado)</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Dithering</label>
+                    <select
+                      value={config.printerDithering}
+                      onChange={(e) => updateConfig("printerDithering", e.target.value)}
+                      className="bg-white border border-slate-300 px-2 py-1.5 rounded text-xs outline-none focus:border-rose-900"
+                    >
+                      <option value="none">Nenhum (Limiar)</option>
+                      <option value="floyd">Floyd-Steinberg</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="printerMirror"
+                      checked={config.printerMirror}
+                      onChange={(e) => updateConfig("printerMirror", e.target.checked)}
+                      className="w-4 h-4 text-rose-900 border-slate-300 rounded focus:ring-rose-900"
+                    />
+                    <label htmlFor="printerMirror" className="text-[10px] font-bold text-slate-500 uppercase">Espelhar</label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="printerNegative"
+                      checked={config.printerNegative}
+                      onChange={(e) => updateConfig("printerNegative", e.target.checked)}
+                      className="w-4 h-4 text-rose-900 border-slate-300 rounded focus:ring-rose-900"
+                    />
+                    <label htmlFor="printerNegative" className="text-[10px] font-bold text-slate-500 uppercase">Negativo</label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <button
+                    onClick={() => printerService.calibrate()}
+                    className="px-2 py-1.5 bg-white border border-slate-300 text-slate-700 text-[10px] font-bold rounded-md hover:bg-slate-50 transition-colors"
+                  >
+                    Calibrar Sensor
+                  </button>
+                  <button
+                    onClick={() => printerService.cancelAll()}
+                    className="px-2 py-1.5 bg-white border border-slate-300 text-red-600 text-[10px] font-bold rounded-md hover:bg-red-50 transition-colors"
+                  >
+                    Cancelar Tudo
+                  </button>
+                  <button
+                    onClick={() => printerService.saveDefaults(config)}
+                    className="col-span-2 px-2 py-1.5 bg-white border border-slate-300 text-slate-700 text-[10px] font-bold rounded-md hover:bg-slate-50 transition-colors"
+                  >
+                    Salvar como Padrão (NVRAM)
+                  </button>
+                </div>
+
+                <div className="border-t border-slate-200 pt-3 mt-1">
+                  <button
+                    onClick={() => setShowNetworkConfig(!showNetworkConfig)}
+                    className="w-full text-[10px] font-bold text-slate-500 uppercase flex items-center justify-between hover:text-slate-700"
+                  >
+                    Parâmetros de Rede
+                    {showNetworkConfig ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  </button>
+                  
+                  {showNetworkConfig && (
+                    <div className="flex flex-col gap-3 mt-3 animate-in fade-in slide-in-from-top-1">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[10px] font-bold text-slate-600">DHCP (Auto)</label>
+                        <Switch
+                          checked={netConfig.dhcp}
+                          onChange={(c) => setNetConfig({ ...netConfig, dhcp: c })}
+                        />
+                      </div>
+                      
+                      {!netConfig.dhcp && (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase">IP</label>
+                            <input
+                              type="text"
+                              value={netConfig.ip}
+                              onChange={(e) => setNetConfig({ ...netConfig, ip: e.target.value })}
+                              placeholder="192.168.0.100"
+                              className="bg-white border border-slate-300 px-2 py-1 rounded text-[10px] outline-none"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase">Máscara</label>
+                            <input
+                              type="text"
+                              value={netConfig.mask}
+                              onChange={(e) => setNetConfig({ ...netConfig, mask: e.target.value })}
+                              placeholder="255.255.255.0"
+                              className="bg-white border border-slate-300 px-2 py-1 rounded text-[10px] outline-none"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <label className="text-[9px] font-bold text-slate-400 uppercase">Gateway</label>
+                            <input
+                              type="text"
+                              value={netConfig.gateway}
+                              onChange={(e) => setNetConfig({ ...netConfig, gateway: e.target.value })}
+                              placeholder="192.168.0.1"
+                              className="bg-white border border-slate-300 px-2 py-1 rounded text-[10px] outline-none"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={async () => {
+                          try {
+                            await printerService.setupNetwork(netConfig.dhcp, netConfig.ip, netConfig.mask, netConfig.gateway);
+                            alert("Configuração enviada! A impressora irá reiniciar.");
+                          } catch (err: any) {
+                            alert(err.message);
+                          }
+                        }}
+                        className="w-full bg-slate-100 border border-slate-300 text-slate-700 py-1.5 rounded text-[10px] font-bold hover:bg-slate-200 transition-colors"
+                      >
+                        Gravar na NVRAM & Reiniciar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-700">Cópias</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={printCopies}
+                    onChange={(e) => setPrintCopies(Number(e.target.value))}
+                    className="bg-white border border-slate-300 px-3 py-2 rounded-md text-sm w-20 outline-none focus:border-rose-900"
+                  />
+                  <button
+                    onClick={handlePrint}
+                    disabled={isPrinting}
+                    className="flex-1 bg-rose-900 text-white py-2.5 rounded-md text-xs font-bold hover:bg-rose-950 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isPrinting ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <Zap size={14} />
+                        IMPRIMIR ETIQUETA
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

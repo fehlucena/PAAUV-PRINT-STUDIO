@@ -126,16 +126,17 @@ export interface LabelConfig {
   isPromo: boolean;
   promoText: string;
   precoAntigo: string;
+  // Printer Settings
+  printerDarkness: number;
+  printerSpeed: number;
+  printerMethod: "T" | "D";
+  printerMediaType: "W" | "M" | "C";
+  printerOrientation: "N" | "R";
+  printerDithering: "none" | "floyd";
+  printerMirror: boolean;
+  printerNegative: boolean;
   // Canvas Editor
   isCanvaOpen?: boolean;
-  // Printer
-  printerIntensity: number;
-  printerQuantity: number;
-  printerSpeed: number;
-  printerMediaType: "W" | "M" | "C";
-  printerMethod: "T" | "D";
-  printerOrientation: "N" | "R";
-  printerDithering: boolean;
 }
 
 export const defaultConfig: LabelConfig = {
@@ -226,11 +227,13 @@ export const defaultConfig: LabelConfig = {
   isPromo: false,
   promoText: "PROMOÇÃO",
   precoAntigo: "De: R$ 50,00",
-  printerIntensity: 8,
-  printerQuantity: 1,
+  // Printer Defaults
+  printerDarkness: 8,
   printerSpeed: 3,
-  printerMediaType: "W",
   printerMethod: "T",
+  printerMediaType: "W",
   printerOrientation: "N",
-  printerDithering: false,
+  printerDithering: "none",
+  printerMirror: false,
+  printerNegative: false,
 };

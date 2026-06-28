@@ -523,12 +523,14 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
     return (
       <div
         ref={ref}
-        id="printable-area"
-        className="flex bg-white shadow-sm relative"
+        id="printable-area-capture"
+        className="flex bg-white shadow-sm relative print:shadow-none"
         style={{
           width: `${config.width}mm`,
           height: `${config.height}mm`,
-          overflow: "hidden",
+          minWidth: `${config.width}mm`,
+          minHeight: `${config.height}mm`,
+          imageRendering: "pixelated",
         }}
       >
         {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}
@@ -545,14 +547,13 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
         </style>
 
         {Array.from({ length: config.columns }).map((_, i) => (
-          <div key={i}>
-            <SingleTag
-              config={config}
-              isLast={i === config.columns - 1}
-              colWidth={colWidth}
-              updateConfig={updateConfig}
-            />
-          </div>
+          <SingleTag
+            key={i}
+            config={config}
+            isLast={i === config.columns - 1}
+            colWidth={colWidth}
+            updateConfig={updateConfig}
+          />
         ))}
       </div>
     );
