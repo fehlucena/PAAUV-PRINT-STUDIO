@@ -531,6 +531,11 @@ export const LabelPreview = forwardRef<HTMLDivElement, LabelPreviewProps>(
           minWidth: `${config.width}mm`,
           minHeight: `${config.height}mm`,
           imageRendering: "pixelated",
+          backgroundColor: "white",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "row",
+          boxSizing: "border-box",
         }}
       >
         {/* Inject a dynamic print style so window.print() respects the exact label dimensions */}

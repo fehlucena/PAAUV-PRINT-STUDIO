@@ -47,20 +47,24 @@ export class PrinterService {
       throw new Error("Área de captura não encontrada");
     }
 
-    // 1. Calculate target dimensions in dots (203 DPI / 8 dots per mm)
+    // 1. Calculate target dimensions
+    // Claude specifies a FIXED width of 384 pixels for the JK01 family (48mm @ 8 dots/mm).
+    // Even if the label is wider, we scale it to this "useful" width for this specific chipset protocol.
+    const fixedWidthDots = 384;
     const dotsPerMm = 8;
-    const targetWidthDots = Math.round(config.width * dotsPerMm);
     const targetHeightDots = Math.round(config.height * dotsPerMm);
 
-    // 2. Capture using html2canvas with perfect scaling
+    // 2. Capture using html2canvas with scaling to exactly 384px width
     const currentWidthPx = printableArea.offsetWidth;
-    const scale = targetWidthDots / (currentWidthPx || 1);
+    const scale = fixedWidthDots / (currentWidthPx || 1);
 
     const canvas = await html2canvas(printableArea, {
       scale: scale,
       backgroundColor: "#ffffff",
       useCORS: true,
       logging: false,
+      width: currentWidthPx,
+      height: printableArea.offsetHeight,
     });
 
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -83,14 +87,14 @@ export class PrinterService {
       }
     }
 
-    const imgData = ctx.getImageData(0, 0, targetWidthDots, targetHeightDots);
+    const imgData = ctx.getImageData(0, 0, fixedWidthDots, targetHeightDots);
     const hexImage = this.generateZPLHex(imgData, config.printerDithering === "floyd", config.printerNegative);
     
-    const rowBytes = Math.ceil(targetWidthDots / 8);
+    const rowBytes = 48; // Fixed for 384px (384/8)
     const byteCount = rowBytes * targetHeightDots;
 
     const zpl = `^XA~SD${config.printerDarkness}
-^PW${targetWidthDots}^LL${targetHeightDots}^FW${config.printerOrientation}
+^PW${fixedWidthDots}^LL${targetHeightDots}^FW${config.printerOrientation}
 ^MT${config.printerMethod}
 ^MN${config.printerMediaType}
 ^PR${config.printerSpeed}
@@ -132,59 +136,64 @@ export class PrinterService {
 
   private generateZPLHex(imageData: ImageData, useDithering: boolean, isNegative: boolean): string {
     const { width, height, data } = imageData;
-    const rowBytes = Math.ceil(width / 8);
+    const bytesPerRow = Math.ceil(width / 8); 
     
-    const pixels = new Uint8Array(width * height);
-    
-    if (useDithering) {
-      const floatPixels = new Float32Array(width * height);
-      for (let i = 0; i < width * height; i++) {
-        floatPixels[i] = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114);
-      }
+    // Convert to grayscale first for better processing
+    let pixels = new Float32Array(width * height);
+    for (let i = 0; i < width * height; i++) {
+      pixels[i] = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114);
+    }
 
+    const bitmap = new Uint8Array(height * bytesPerRow);
+
+    if (useDithering) {
+      // Floyd-Steinberg Dithering
       for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
           const idx = y * width + x;
-          const oldPixel = floatPixels[idx];
+          const oldPixel = pixels[idx];
           const newPixel = oldPixel < 128 ? 0 : 255;
-          floatPixels[idx] = newPixel;
-          const err = (oldPixel - newPixel) / 16;
-          
-          if (x + 1 < width) floatPixels[idx + 1] += err * 7;
+          pixels[idx] = newPixel;
+
+          const quantError = (oldPixel - newPixel) / 16;
+          if (x + 1 < width) pixels[idx + 1] += quantError * 7;
           if (y + 1 < height) {
-            if (x > 0) floatPixels[idx + width - 1] += err * 3;
-            floatPixels[idx + width] += err * 5;
-            if (x + 1 < width) floatPixels[idx + width + 1] += err * 1;
+            if (x > 0) pixels[idx + width - 1] += quantError * 3;
+            pixels[idx + width] += quantError * 5;
+            if (x + 1 < width) pixels[idx + width + 1] += quantError * 1;
           }
 
-          let val = newPixel === 0 ? 1 : 0;
-          if (isNegative) val = val === 1 ? 0 : 1;
-          pixels[idx] = val;
+          let isBlack = newPixel === 0;
+          if (isNegative) isBlack = !isBlack;
+
+          if (isBlack) {
+            const byteIndex = (y * bytesPerRow) + Math.floor(x / 8);
+            const bitIndex = x % 8;
+            bitmap[byteIndex] |= (1 << (7 - bitIndex)); // MSB First for ZPL ^GFA
+          }
         }
       }
     } else {
-      for (let i = 0; i < width * height; i++) {
-        const gray = (data[i * 4] * 0.299 + data[i * 4 + 1] * 0.587 + data[i * 4 + 2] * 0.114);
-        let val = gray < 128 ? 1 : 0;
-        if (isNegative) val = val === 1 ? 0 : 1;
-        pixels[i] = val;
+      // Simple Thresholding
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const idx = y * width + x;
+          const pixel = pixels[idx];
+          let isBlack = pixel < 128;
+          if (isNegative) isBlack = !isBlack;
+
+          if (isBlack) {
+            const byteIndex = (y * bytesPerRow) + Math.floor(x / 8);
+            const bitIndex = x % 8;
+            bitmap[byteIndex] |= (1 << (7 - bitIndex)); // MSB First for ZPL ^GFA
+          }
+        }
       }
     }
 
     let hexString = "";
-    for (let y = 0; y < height; y++) {
-      for (let b = 0; b < rowBytes; b++) {
-        let byteValue = 0;
-        for (let bit = 0; bit < 8; bit++) {
-          const x = b * 8 + bit;
-          if (x < width) {
-            if (pixels[y * width + x] === 1) {
-              byteValue |= (1 << (7 - bit));
-            }
-          }
-        }
-        hexString += byteValue.toString(16).padStart(2, "0").toUpperCase();
-      }
+    for (let i = 0; i < bitmap.length; i++) {
+      hexString += bitmap[i].toString(16).padStart(2, "0").toUpperCase();
     }
     return hexString;
   }
