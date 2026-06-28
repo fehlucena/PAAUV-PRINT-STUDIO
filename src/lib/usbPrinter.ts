@@ -165,26 +165,15 @@ const CSS_PX_PER_MM = 96 / 25.4;
 
 async function captureNodeAsImageData(
   node: HTMLElement,
-  widthDots: number,
-  heightDots: number,
+  logicalWidthDots: number,
+  logicalHeightDots: number,
+  physWidthDots: number,
+  physHeightDots: number,
+  orientation: "N" | "R",
+  mirror: boolean,
 ): Promise<ImageData> {
-  // BUG 1 (causa do branco total): o nó "fonte" fica posicionado em
-  // position: fixed; left: -99999px (para não aparecer na tela). O
-  // html-to-image clona esse nó e o insere dentro de um <svg><foreignObject>
-  // isolado, com seu próprio espaço de coordenadas a partir de zero — e o
-  // clone "herda" esse left: -99999px, ficando fora da área visível desse
-  // espaço isolado. O resultado é uma foto só do fundo branco.
-  //
-  // BUG 2 (etiqueta encolhida, viria depois de corrigir o branco): o
-  // conteúdo do LabelPreview é todo dimensionado em mm (CSS), enquanto
-  // queríamos o resultado em "pixels = dots da impressora" — duas escalas
-  // diferentes que não se convertem automaticamente.
-  //
-  // Correção: neutralizamos position/left/top no clone (resolve o branco) e
-  // usamos pixelRatio para escalar a renderização natural (em mm/CSS-px)
-  // até a resolução exata exigida pela impressora (resolve o encolhido).
-  const naturalWidthPx = node.offsetWidth || widthDots / CSS_PX_PER_MM;
-  const pixelRatio = widthDots / naturalWidthPx;
+  const naturalWidthPx = node.offsetWidth || logicalWidthDots / CSS_PX_PER_MM;
+  const pixelRatio = logicalWidthDots / naturalWidthPx;
 
   const canvas = await toCanvas(node, {
     pixelRatio,
@@ -197,28 +186,41 @@ async function captureNodeAsImageData(
     },
   });
 
-  // Caso ainda haja diferença de arredondamento entre o canvas capturado e
-  // o tamanho exato esperado pela impressora, reamostramos para o tamanho
-  // exato em vez de mandar um bitmap de proporção levemente errada ao ZPL.
-  let finalCanvas = canvas;
-  if (canvas.width !== widthDots || canvas.height !== heightDots) {
-    finalCanvas = document.createElement("canvas");
-    finalCanvas.width = widthDots;
-    finalCanvas.height = heightDots;
-    const resizeCtx = finalCanvas.getContext("2d");
-    if (!resizeCtx) {
-      throw new Error("Não foi possível obter o contexto 2D para reamostragem do canvas.");
-    }
-    resizeCtx.fillStyle = "#ffffff";
-    resizeCtx.fillRect(0, 0, widthDots, heightDots);
-    resizeCtx.drawImage(canvas, 0, 0, widthDots, heightDots);
+  const finalCanvas = document.createElement("canvas");
+  finalCanvas.width = physWidthDots;
+  finalCanvas.height = physHeightDots;
+  const resizeCtx = finalCanvas.getContext("2d", { willReadFrequently: true });
+  if (!resizeCtx) {
+    throw new Error("Não foi possível obter o contexto 2D para reamostragem do canvas.");
+  }
+  
+  resizeCtx.fillStyle = "#ffffff";
+  resizeCtx.fillRect(0, 0, physWidthDots, physHeightDots);
+
+  resizeCtx.save();
+  
+  // Mover para o centro do canvas FÍSICO para aplicar transformações
+  resizeCtx.translate(physWidthDots / 2, physHeightDots / 2);
+  
+  if (orientation === "R") {
+    resizeCtx.rotate((90 * Math.PI) / 180);
+  }
+  if (mirror) {
+    resizeCtx.scale(-1, 1);
   }
 
-  const ctx = finalCanvas.getContext("2d", { willReadFrequently: true });
-  if (!ctx) {
-    throw new Error("Não foi possível obter o contexto 2D do canvas de captura.");
-  }
-  return ctx.getImageData(0, 0, finalCanvas.width, finalCanvas.height);
+  // Desenhar centralizado com as dimensões lógicas (tamanho do design original)
+  resizeCtx.drawImage(
+    canvas,
+    -logicalWidthDots / 2,
+    -logicalHeightDots / 2,
+    logicalWidthDots,
+    logicalHeightDots
+  );
+  
+  resizeCtx.restore();
+
+  return resizeCtx.getImageData(0, 0, physWidthDots, physHeightDots);
 }
 
 // ---------------------------------------------------------------------------
@@ -231,6 +233,7 @@ async function captureNodeAsImageData(
 export function ditherImageData(
   imageData: ImageData,
   algorithm: DitherAlgorithm = "floyd",
+  negative: boolean = false,
 ): void {
   const data = imageData.data;
   const w = imageData.width;
@@ -240,7 +243,8 @@ export function ditherImageData(
     for (let i = 0; i < data.length; i += 4) {
       const v = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
       const bw = v < 128 ? 0 : 255;
-      data[i] = data[i + 1] = data[i + 2] = bw;
+      const finalColor = negative ? (255 - bw) : bw;
+      data[i] = data[i + 1] = data[i + 2] = finalColor;
     }
     return;
   }
@@ -265,8 +269,9 @@ export function ditherImageData(
       if (y + 1 < h) gray[idx + w] += (quantError * 5) / 16;
       if (x + 1 < w && y + 1 < h) gray[idx + 1 + w] += (quantError * 1) / 16;
 
+      const finalColor = negative ? (255 - newPixel) : newPixel;
       const dataIdx = idx * 4;
-      data[dataIdx] = data[dataIdx + 1] = data[dataIdx + 2] = newPixel;
+      data[dataIdx] = data[dataIdx + 1] = data[dataIdx + 2] = finalColor;
       data[dataIdx + 3] = 255;
     }
   }
@@ -361,6 +366,9 @@ export interface PrintLabelOptions {
   heightMm: number;
   settings?: PrinterSettings;
   ditherAlgorithm?: DitherAlgorithm;
+  negative?: boolean;
+  mirror?: boolean;
+  orientation?: "N" | "R";
 }
 
 export async function printLabelViaUsb({
@@ -369,18 +377,32 @@ export async function printLabelViaUsb({
   heightMm,
   settings = defaultPrinterSettings,
   ditherAlgorithm = "floyd",
+  negative = false,
+  mirror = false,
+  orientation = "N",
 }: PrintLabelOptions): Promise<void> {
   if (!activeDevice) {
     throw new Error("Conecte a impressora USB antes de imprimir.");
   }
 
-  const widthDots = Math.round(widthMm * DOTS_PER_MM);
-  const heightDots = Math.round(heightMm * DOTS_PER_MM);
+  const logicalWidthDots = Math.round(widthMm * DOTS_PER_MM);
+  const logicalHeightDots = Math.round(heightMm * DOTS_PER_MM);
 
-  const imageData = await captureNodeAsImageData(node, widthDots, heightDots);
-  ditherImageData(imageData, ditherAlgorithm);
+  const physWidthDots = orientation === "R" ? logicalHeightDots : logicalWidthDots;
+  const physHeightDots = orientation === "R" ? logicalWidthDots : logicalHeightDots;
+
+  const imageData = await captureNodeAsImageData(
+    node, 
+    logicalWidthDots, 
+    logicalHeightDots, 
+    physWidthDots, 
+    physHeightDots, 
+    orientation, 
+    mirror
+  );
+  ditherImageData(imageData, ditherAlgorithm, negative);
   const bitmap = imageDataToZplHex(imageData);
-  const zpl = buildZpl(widthDots, heightDots, bitmap, settings);
+  const zpl = buildZpl(physWidthDots, physHeightDots, bitmap, settings);
 
   await sendRawZpl(zpl);
 }

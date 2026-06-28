@@ -49,6 +49,17 @@ export default function App() {
         node: usbCaptureRef.current,
         widthMm: config.width,
         heightMm: config.height,
+        settings: {
+          darkness: config.printerDarkness,
+          speed: config.printerSpeed,
+          method: config.printerMethod,
+          media: config.printerMedia,
+          copies: config.printerCopies,
+        },
+        ditherAlgorithm: config.printerDithering,
+        negative: config.printerNegative,
+        mirror: config.printerMirror,
+        orientation: config.printerOrientation,
       });
     } catch (err) {
       alert(err instanceof Error ? err.message : "Falha ao imprimir via USB.");

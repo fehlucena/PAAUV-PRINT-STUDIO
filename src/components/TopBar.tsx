@@ -123,15 +123,33 @@ export const TopBar: React.FC<TopBarProps> = ({
           </div>
           
           {usbConnected ? (
-            <button
-              onClick={onPrintUsb}
-              disabled={usbBusy}
-              title="Imprime direto na impressora USB, sem o diálogo do navegador"
-              className="bg-emerald-700 border border-emerald-700 font-bold text-white px-4 py-2 rounded-md text-xs cursor-pointer hover:bg-emerald-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 shadow-sm"
-            >
-              {usbBusy ? <Loader2 size={16} className="animate-spin" /> : <Usb size={16} />}
-              {usbBusy ? "Imprimindo..." : "Imprimir USB"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const { cancelAllJobs } = await import("../lib/usbPrinter");
+                    await cancelAllJobs();
+                    alert("Comando de cancelamento enviado! O buffer foi limpo.");
+                  } catch(e: any) {
+                    alert(e.message || "Erro ao cancelar");
+                  }
+                }}
+                disabled={usbBusy}
+                title="Cancela impressões na fila"
+                className="bg-red-100 border border-red-300 font-bold text-red-700 px-3 py-2 rounded-md text-xs cursor-pointer hover:bg-red-200 transition-colors flex items-center shadow-sm"
+              >
+                Cancelar USB
+              </button>
+              <button
+                onClick={onPrintUsb}
+                disabled={usbBusy}
+                title="Imprime direto na impressora USB, sem o diálogo do navegador"
+                className="bg-emerald-700 border border-emerald-700 font-bold text-white px-4 py-2 rounded-md text-xs cursor-pointer hover:bg-emerald-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                {usbBusy ? <Loader2 size={16} className="animate-spin" /> : <Usb size={16} />}
+                {usbBusy ? "Imprimindo..." : "Imprimir USB"}
+              </button>
+            </div>
           ) : (
             <button
               onClick={onConnectUsb}
